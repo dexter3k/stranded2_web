@@ -1,34 +1,10 @@
+function Gui(driver) {
+    this.driver = driver;
+    this.bmpf = new Bmpf(driver);
 
-function loadTexture(gl, url) {
-    return new Promise(resolve => {
-        const image = new Image();
-        image.onload = function() {
-            console.log("Start " + url);
-            const texture = gl.createTexture();
-            gl.bindTexture(gl.TEXTURE_2D, texture);
-            gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
-            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
-
-            console.log("End " + url);
-            resolve(texture);
-        }
-        image.src = url;
-    });
-}
-
-async function loadTextures(gl, srcList) {
-    var promises = [];
-    for (var i = 0; i < srcList.length; ++i) {
-        promises = promises.concat(loadTexture(gl, srcList[i]));
-    }
-    const textures = await Promise.all(promises);
-    var result = {};
-    for (var i = 0; i < srcList.length; ++i) {
-        result[srcList[i]] = textures[i];
-    }
-    return result;
+    this.load = async function() {
+        await this.bmpf.load();
+    };
 }
 
 async function main() {
@@ -38,17 +14,38 @@ async function main() {
         alert("Unable to initialize WebGL. Your browser or machine may not support it.");
         return;
     }
+    const driver = new Driver(gl, 800, 600);
+    const gui = new Gui(driver);
+    await gui.load();
 
-    const textures = await loadTextures(gl, [
-        "assets/Stranded II/sys/gfx/bigbutton.bmp",
-        "assets/Stranded II/sys/gfx/bigbutton_over.bmp",
-        "assets/Stranded II/sys/gfx/cursor.bmp",
-        "assets/Stranded II/sys/gfx/cursor_crosshair.bmp",
-        "assets/Stranded II/sys/gfx/cursor_height.bmp",
-        "assets/Stranded II/sys/gfx/cursor_move.bmp",
-        "assets/Stranded II/sys/gfx/cursor_paint.bmp",
-        "assets/Stranded II/sys/gfx/cursor_rotate.bmp",
-        "assets/Stranded II/sys/gfx/cursor_text.bmp",
+    gui.bmpf.loadingScreen("Init..", 25.0);
+
+    // For now, this is just a dummy load to see loading bar going
+    const textures = await loadTextures(gl, "assets/Stranded II/", [
+        "sys/gfx/bigbutton.bmp",
+        "sys/gfx/bigbutton_over.bmp",
+        "sys/gfx/cursor.bmp",
+        "sys/gfx/cursor_crosshair.bmp",
+        "sys/gfx/cursor_height.bmp",
+        "sys/gfx/cursor_move.bmp",
+        "sys/gfx/cursor_paint.bmp",
+        "sys/gfx/cursor_rotate.bmp",
+        "sys/gfx/cursor_text.bmp",
     ]);
     console.log(textures);
+
+    gui.bmpf.loadingScreen("Loading game..  Init", 75.0);
+
+    const sleep = (milliseconds) => {
+        return new Promise(resolve => setTimeout(resolve, milliseconds))
+    }
+    for (var i = 0; i <= 100; i++) {
+        gui.bmpf.loadingScreen("Loading...", i);
+        await sleep(100);
+    }
+
+    // function render() {
+    //     driver.clearScene();
+    // };
+    // render();
 }

@@ -11,7 +11,7 @@ var fileHandler = http.FileServer(http.Dir("./"))
 
 func handler(w http.ResponseWriter, r *http.Request) {
     w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
-    time.Sleep(time.Second)
+    time.Sleep(100 * time.Millisecond)
     fileHandler.ServeHTTP(w, r)
 }
 
