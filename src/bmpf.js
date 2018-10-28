@@ -85,6 +85,7 @@ function Bmpf(driver) {
         }
     };
 
+    // Mess
     this.loadingScreen = function(text, progressPercent = -1) {
         driver.clearScene();
         const centerX = Math.floor(driver.width/2);
