@@ -5,7 +5,7 @@ async function loadBinaryAsset(source) {
         request.responseType = "arraybuffer";
         request.onload = function() {
             console.log("Loaded binary asset " + source);
-            resolve(new Uint8Array(request.response));
+            resolve(request.response);
         };
         request.send();
     });

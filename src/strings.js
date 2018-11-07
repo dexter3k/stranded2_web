@@ -13,6 +13,10 @@ function Strings() {
         this.editor[i] = i + " undefined";
     }
 
+    this.format = function(str, v1="", v2="", v3="") {
+        return str.replace(/\$1/, v1).replace(/\$2/, v2).replace(/\$3/, v3);
+    };
+
     this.load = async function() {
         const source = await loadTextAsset("assets/Stranded II/sys/strings.inf");
         const lines = source.split(/[\r\n]+/g);
@@ -46,5 +50,5 @@ function Strings() {
                 this.editor[key2] = match[3];
             }
         }, this);
-    }
+    };
 }

@@ -4,7 +4,8 @@ function Bmpf(driver) {
     var textures = {};
     var fonts = [];
 
-    function loadFont(data, texture) {
+    function loadFont(dataBuffer, texture) {
+        data = new Uint8Array(dataBuffer);
         font = {};
         font.texture = texture;
         var pos = 0;
