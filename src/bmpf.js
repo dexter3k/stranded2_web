@@ -4,6 +4,52 @@ function Bmpf(driver) {
     var textures = {};
     var fonts = [];
 
+    this.loadingScreen = function(text, progressPercent = -1) {
+        driver.clearScene();
+        const centerX = Math.floor(driver.width/2);
+        const centerY = Math.floor(driver.height/2);
+        this.centeredText(centerX, centerY-20, text, 0);
+        if (progressPercent != -1) {
+            if (progressPercent > 100) { progressPercent = 100; }
+            if (progressPercent < 0) { progressPercent = 0; }
+
+            const progress = 600 / 100 * progressPercent;
+            this.driver.drawImage([centerX-300, centerY+5, centerX-300 + progress, centerY+10],
+                [0, 0, progress, 5], [600, 5], textures["sys/gfx/progress.bmp"]);
+
+            this.centeredText(centerX, centerY+20, progressPercent+"%", 0);
+        }
+    };
+
+    this.centeredText = function(x, y, text, font) {
+        var offset = 0;
+        for (var i = 0; i < text.length; i++) {
+            const c = text.charCodeAt(i);
+            if (c == 32) {// space
+                offset += Math.floor(fonts[font].glyphWidth / 2);
+            } else if (fonts[font].mapping[c]) {
+                offset += fonts[font].mapping[c].width;
+            }
+        }
+        x -= Math.floor(offset/2);
+        for (var i = 0; i < text.length; i++) {
+            const c = text.charCodeAt(i);
+            if (c == 32) {// space
+                x += Math.floor(fonts[font].glyphWidth / 2);
+            } else if (fonts[font].mapping[c]) {
+                const sourceX = fonts[font].glyphWidth * fonts[font].mapping[c].index;
+                const sourceY = 0;
+                const sourceW = fonts[font].mapping[c].width;
+                const sourceH = fonts[font].glyphHeight;
+                const target = [x, y, x+sourceW, y+sourceH];
+                const source = [sourceX, sourceY, sourceX+sourceW, sourceY+sourceH];
+                this.driver.drawImage(target, source,
+                    [fonts[font].glyphWidth * fonts[font].glyphCount, fonts[font].glyphHeight], fonts[font].texture);
+                x += sourceW;
+            }
+        }
+    };
+
     function loadFont(dataBuffer, texture) {
         data = new Uint8Array(dataBuffer);
         font = {};
@@ -55,56 +101,5 @@ function Bmpf(driver) {
         fonts[4] = loadFont(fontDatas[0], textures["sys/gfx/font_norm_good.bmp"]);
         fonts[5] = loadFont(fontDatas[1], textures["sys/gfx/font_tiny.bmp"]);
         fonts[6] = loadFont(fontDatas[0], textures["sys/gfx/font_handwriting.bmp"]);
-    };
-
-    this.centeredText = function(x, y, text, font) {
-        var offset = 0;
-        for (var i = 0; i < text.length; i++) {
-            const c = text.charCodeAt(i);
-            if (c == 32) {// space
-                offset += Math.floor(fonts[font].glyphWidth / 2);
-            } else if (fonts[font].mapping[c]) {
-                offset += fonts[font].mapping[c].width;
-            }
-        }
-        x -= Math.floor(offset/2);
-        for (var i = 0; i < text.length; i++) {
-            const c = text.charCodeAt(i);
-            if (c == 32) {// space
-                x += Math.floor(fonts[font].glyphWidth / 2);
-            } else if (fonts[font].mapping[c]) {
-                const sourceX = fonts[font].glyphWidth * fonts[font].mapping[c].index;
-                const sourceY = 0;
-                const sourceW = fonts[font].mapping[c].width;
-                const sourceH = fonts[font].glyphHeight;
-                const target = [x, y, x+sourceW, y+sourceH];
-                const source = [sourceX, sourceY, sourceX+sourceW, sourceY+sourceH];
-                this.driver.drawImage(target, source,
-                    [fonts[font].glyphWidth * fonts[font].glyphCount, fonts[font].glyphHeight], fonts[font].texture);
-                x += sourceW;
-            }
-        }
-    };
-
-    // Mess
-    this.loadingScreen = function(text, progressPercent = -1) {
-        driver.clearScene();
-        const centerX = Math.floor(driver.width/2);
-        const centerY = Math.floor(driver.height/2);
-        this.centeredText(centerX, centerY-20, text, 0);
-        if (progressPercent != -1) {
-            if (progressPercent > 100) { progressPercent = 100; }
-            if (progressPercent < 0) { progressPercent = 0; }
-            
-            // this.driver.rect2d([
-            //     Math.floor(driver.width/2)-300,
-            //     Math.floor(driver.height/2)+5,
-            //     600, 5], [0.235, 0.235, 0.235, 1.0]);
-            const progress = 600 / 100 * progressPercent;
-            this.driver.drawImage([centerX-300, centerY+5, centerX-300 + progress, centerY+10],
-                [0, 0, progress, 5], [600, 5], textures["sys/gfx/progress.bmp"]);
-
-            this.centeredText(centerX, centerY+20, progressPercent+"%", 0);
-        }
     };
 }

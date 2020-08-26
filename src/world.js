@@ -9,9 +9,9 @@ function World(scene) {
         this.scene.driver.drawTerrain(this.terrain);
     };
 
-    this.init = async function(vars, terrain) {
+    this.init = function(vars, terrain) {
         this.vars = vars;
-        this.terrain = terrain;
+        this.terrain = new Terrain(scene.driver, terrain.heightmap);
     };
 
     this.freezeTime = function(freeze) {

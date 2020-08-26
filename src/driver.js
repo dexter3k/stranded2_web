@@ -14,9 +14,13 @@ function Driver(gl, width, height) {
     gl.enable(gl.DEPTH_TEST);
     gl.depthFunc(gl.LEQUAL);
 
+    gl.disable(gl.CULL_FACE);
+    gl.frontFace(gl.CCW);
+
     gl.viewport(0, 0, width, height);
 
     const default2DProgram = buildDefault2DProgram();
+    const default3DProgram = buildDefault3DProgram();
     const buffersImage = buildImageBuffers();
 
     this.clearScene = function() {
@@ -57,8 +61,44 @@ function Driver(gl, width, height) {
         gl.drawArrays(gl.TRIANGLES, 0, 6);
     };
 
-    this.drawTerrain = function() {
+    this.drawTerrain = function(terrain) {
         go3D();
+
+
+        const fieldOfView = 90 / 180 * Math.PI;
+        const aspect = gl.canvas.clientWidth / gl.canvas.clientHeight;
+        const zNear = 0.1;
+        const zFar = 1000.0;
+        const projectionMatrix = mat4.create();
+        mat4.perspective(projectionMatrix, fieldOfView, aspect, zNear, zFar);
+        const rightHanded = true;
+        if (rightHanded) {
+            projectionMatrix[10] = -projectionMatrix[10]; // zf / (zf - zn) vs zf / (zn - zf)
+            projectionMatrix[11] = -projectionMatrix[11]; // 1 vs -1
+        }
+        gl.uniformMatrix4fv(default3DProgram.uniforms.projection, false, projectionMatrix);
+
+        const modelViewMatrix = mat4.create();
+        mat4.translate(modelViewMatrix, modelViewMatrix, [0.0, 0.0, 0.0]);
+        mat4.scale(modelViewMatrix, modelViewMatrix, [1.0, 2.0, 1.0]);
+
+        const viewMatrix = mat4.create();
+        const camX = +16.0;
+        const camY = +18.0;
+        const camZ = -10.0;
+        mat4.translate(viewMatrix, viewMatrix, [-camX, -camY, -camZ]);
+
+        mat4.multiply(modelViewMatrix, modelViewMatrix, viewMatrix);
+        gl.uniformMatrix4fv(default3DProgram.uniforms.modelView, false, modelViewMatrix);
+
+
+        const data = terrain.getRenderData();
+        gl.bindBuffer(gl.ARRAY_BUFFER, data.buffer);
+
+        gl.enableVertexAttribArray(default3DProgram.attribs.vertex);
+        gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 0, 0);
+
+        gl.drawArrays(gl.TRIANGLES, 0, data.count);
     };
 
     function go2D() {
@@ -77,8 +117,9 @@ function Driver(gl, width, height) {
         }
         in2DMode = false;
 
-        gl.enable(gl.DEPTH_TEST);
+        // gl.enable(gl.DEPTH_TEST);
         gl.clear(gl.DEPTH_BUFFER_BIT);
+        gl.useProgram(default3DProgram.program);
     };
 
     function buildDefault2DProgram() {
@@ -129,6 +170,40 @@ function Driver(gl, width, height) {
             },
         };
     };
+
+    function buildDefault3DProgram() {
+        const vsSource = `
+            attribute vec4 aVertexPosition;
+
+            uniform mat4 uModelViewMatrix;
+            uniform mat4 uProjectionMatrix;
+
+            void main() {
+                gl_Position = uProjectionMatrix * uModelViewMatrix * aVertexPosition;
+            }
+        `;
+
+        const fsSource = `
+            precision mediump float;
+
+            void main() {
+                gl_FragColor = vec4(1.0, 1.0, 1.0, 1.0);
+            }
+        `;
+
+        const shaderProgram = initShaderProgram(gl, vsSource, fsSource);
+
+        return {
+            program: shaderProgram,
+            attribs: {
+                vertex: gl.getAttribLocation(shaderProgram, 'aVertexPosition'),
+            },
+            uniforms: {
+                modelView: gl.getUniformLocation(shaderProgram, 'uModelViewMatrix'),
+                projection: gl.getUniformLocation(shaderProgram, 'uProjectionMatrix'),
+            },
+        };
+    }
 
     function buildImageBuffers() {
         const positions = [

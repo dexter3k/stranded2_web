@@ -1,6 +1,7 @@
 // disable cursor
 // canvas.style.cursor = "none"; // also "default", "grab", "scroll", "text"
 
+// for debugging purposes only!
 function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
@@ -13,21 +14,36 @@ async function main() {
         return;
     }
 
-    const driver = new Driver(gl, 800, 600);
+    const driver = new Driver(gl, gl.drawingBufferWidth, gl.drawingBufferHeight);
     const gui = new Gui(driver);
     const scene = new Scene(gui, driver);
     await gui.loadFonts();
     const world = new World(scene);
 
+    // Loading strings
     gui.bmpf.loadingScreen("Loading Translations", 0.0);
     await gui.loadStrings();
+
+    // Loading interface
     gui.bmpf.loadingScreen(gui.strings.base[1], 6.0);
     await gui.preloadMedia();
+
+    // Loading materials
     gui.bmpf.loadingScreen("Loading Materials", 18.0);
+
+    // Loading stuff
     gui.bmpf.loadingScreen(gui.strings.base[2], 19.0);
+
+    // Loading objects
     gui.bmpf.loadingScreen(gui.strings.base[3], 20.0);
+
+    // Loading units
     gui.bmpf.loadingScreen(gui.strings.base[4], 60.0);
+
+    // Loading items
     gui.bmpf.loadingScreen(gui.strings.base[5], 80.0);
+
+    // Loading infos
     gui.bmpf.loadingScreen(gui.strings.base[6], 98.0);
 
     await startMenu();

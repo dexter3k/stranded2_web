@@ -1,16 +1,18 @@
 async function loadMap(path, world, gui) {
+    // Loading map
     gui.bmpf.loadingScreen(gui.strings.base[21], 1.0);
     data = await loadBinaryAsset("assets/Stranded II/" + path);
     const stream = new BinaryStream(data);
     console.log(stream);
 
+    // Loading map
     gui.bmpf.loadingScreen(gui.strings.base[21], 10.0);
 
     let mapHeader = {};
     mapHeader.comment = stream.readLine();
     if (mapHeader.comment.substr(0, 15) !== "### Stranded II") {
         console.log("Unknown map header: " + comment);
-        // Should crash but let's continue
+        // Should crash but let's continue at least for now
     }
     mapHeader.version = stream.readLine();
     mapHeader.date = stream.readLine();
@@ -26,7 +28,7 @@ async function loadMap(path, world, gui) {
         stream.readLine();
     }
 
-    // Map preview image
+    // Map preview image, skip when loading map
     stream.skipBytes(96 * 72 * 3);
 
     let passHeader = {};
@@ -59,9 +61,9 @@ async function loadMap(path, world, gui) {
     for (let i = 0; i <= 9; i++) {
         quickslots[i] = stream.readString();
     }
-
     console.log(quickslots);
 
+    // Loading colormap
     gui.bmpf.loadingScreen(gui.strings.base[22], 20.0);
 
     let colormap = {};
@@ -73,10 +75,13 @@ async function loadMap(path, world, gui) {
             stream.skipBytes(3); // R G B of the image
         }
     }
+    console.log(colormap);
 
+    // Loading heightmap
     gui.bmpf.loadingScreen(gui.strings.base[23], 30.0);
 
     let terrain = {};
+    // Size is in cells x/y, not actual height points
     terrain.size = stream.readInt();
     terrain.data = [];
     if (terrain.size < 0) {
@@ -87,7 +92,9 @@ async function loadMap(path, world, gui) {
             terrain.data[(terrain.size+1) * y + x] = stream.readFloat();
         }
     }
+    console.log(terrain);
 
+    // Loading grassmap
     gui.bmpf.loadingScreen(gui.strings.base[24], 35.0);
 
     let grassmap = {};
@@ -99,13 +106,17 @@ async function loadMap(path, world, gui) {
         }
     }
 
+    // We have parsed all basic world visuals which we can now render.
     const terrainInfo = {
         heightmap: terrain,
         colormap: colormap,
         grassmap: grassmap,
     };
-    await world.init(mapVars, terrainInfo);
+    world.init(mapVars, terrainInfo);
 
+    // Now populate our world with units, buildings, trees and info points
+
+    // Loading objects
     gui.bmpf.loadingScreen(gui.strings.base[25], 40.0);
 
     // gui.bmpf.loadingScreen(gui.strings.base[26], 70.0);
