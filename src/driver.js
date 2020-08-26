@@ -65,10 +65,10 @@ function Driver(gl, width, height) {
         go3D();
 
 
-        const fieldOfView = 90 / 180 * Math.PI;
+        const fieldOfView = 74.75 / 180 * Math.PI;
         const aspect = gl.canvas.clientWidth / gl.canvas.clientHeight;
         const zNear = 0.1;
-        const zFar = 1000.0;
+        const zFar = 10000.0;
         const projectionMatrix = mat4.create();
         mat4.perspective(projectionMatrix, fieldOfView, aspect, zNear, zFar);
         const rightHanded = true;
@@ -79,16 +79,22 @@ function Driver(gl, width, height) {
         gl.uniformMatrix4fv(default3DProgram.uniforms.projection, false, projectionMatrix);
 
         const modelViewMatrix = mat4.create();
-        mat4.translate(modelViewMatrix, modelViewMatrix, [0.0, 0.0, 20.0]);
-        mat4.scale(modelViewMatrix, modelViewMatrix, [1.0, 2.0, 1.0]);
+        const worldSize = 64.0;
+        const worldHeight = 3200.0;
+        mat4.translate(modelViewMatrix, modelViewMatrix, [-worldSize * 32 / 2, -worldHeight / 2, -worldSize * 32 / 2]);
+        mat4.scale(modelViewMatrix, modelViewMatrix, [worldSize, worldHeight, worldSize]);
 
         const viewMatrix = mat4.create();
-        const camX = +16.0;
-        const camY = +23.0;
-        const camZ = -10.0;
+        const camX = +445;
+        const camY = +95 + 16;
+        const camZ = +391;
+        const yaw  = 142;
+        const pitch = -3;
+        mat4.rotate(viewMatrix, viewMatrix, pitch / 180.0 * Math.PI, [-1.0, 0.0, 0.0]);
+        mat4.rotate(viewMatrix, viewMatrix, yaw / 180.0 * Math.PI, [0.0, 1.0, 0.0]);
         mat4.translate(viewMatrix, viewMatrix, [-camX, -camY, -camZ]);
 
-        mat4.multiply(modelViewMatrix, modelViewMatrix, viewMatrix);
+        mat4.multiply(modelViewMatrix, viewMatrix, modelViewMatrix);
         gl.uniformMatrix4fv(default3DProgram.uniforms.modelView, false, modelViewMatrix);
 
 

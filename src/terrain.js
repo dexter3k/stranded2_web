@@ -22,7 +22,7 @@ function Terrain(driver, data) {
 			this.elements = this.size * this.size * 2 * 3;
 			const points = new Float32Array(this.elements * 5);
 			let i = 0;
-			const scale = 32.0;
+			const scale = 1.0;
 			const addPoint = (x, z) => {
 				points[i++] = x;
 				points[i++] = this.points[x + z * (this.size + 1)] * scale;
