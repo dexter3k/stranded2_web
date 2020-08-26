@@ -20,13 +20,15 @@ function Terrain(driver, data) {
 			gl.bindBuffer(gl.ARRAY_BUFFER, this.buffer);
 			// Two triangles per cell, 
 			this.elements = this.size * this.size * 2 * 3;
-			const points = new Float32Array(this.elements * 3);
+			const points = new Float32Array(this.elements * 5);
 			let i = 0;
 			const scale = 32.0;
 			const addPoint = (x, z) => {
 				points[i++] = x;
 				points[i++] = this.points[x + z * (this.size + 1)] * scale;
 				points[i++] = z;
+				points[i++] = x / (this.size); // u
+				points[i++] = z / (this.size); // v
 			}
 
 			for (let x = 0; x < this.size; x++) {

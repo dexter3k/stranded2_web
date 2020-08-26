@@ -79,12 +79,12 @@ function Driver(gl, width, height) {
         gl.uniformMatrix4fv(default3DProgram.uniforms.projection, false, projectionMatrix);
 
         const modelViewMatrix = mat4.create();
-        mat4.translate(modelViewMatrix, modelViewMatrix, [0.0, 0.0, 0.0]);
+        mat4.translate(modelViewMatrix, modelViewMatrix, [0.0, 0.0, 20.0]);
         mat4.scale(modelViewMatrix, modelViewMatrix, [1.0, 2.0, 1.0]);
 
         const viewMatrix = mat4.create();
         const camX = +16.0;
-        const camY = +18.0;
+        const camY = +23.0;
         const camZ = -10.0;
         mat4.translate(viewMatrix, viewMatrix, [-camX, -camY, -camZ]);
 
@@ -96,7 +96,10 @@ function Driver(gl, width, height) {
         gl.bindBuffer(gl.ARRAY_BUFFER, data.buffer);
 
         gl.enableVertexAttribArray(default3DProgram.attribs.vertex);
-        gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 0, 0);
+        gl.vertexAttribPointer(default3DProgram.attribs.vertex, 3, gl.FLOAT, false, 5 * 4, 0);
+
+        gl.enableVertexAttribArray(default3DProgram.attribs.texCoords);
+        gl.vertexAttribPointer(default3DProgram.attribs.texCoords, 2, gl.FLOAT, false, 5 * 4, 3 * 4)
 
         gl.drawArrays(gl.TRIANGLES, 0, data.count);
     };
@@ -173,21 +176,29 @@ function Driver(gl, width, height) {
 
     function buildDefault3DProgram() {
         const vsSource = `
-            attribute vec4 aVertexPosition;
+            attribute vec3 pos;
+            attribute vec2 uv;
 
-            uniform mat4 uModelViewMatrix;
-            uniform mat4 uProjectionMatrix;
+            uniform mat4 modelView;
+            uniform mat4 projection;
+
+            varying mediump vec2 texCoords;
 
             void main() {
-                gl_Position = uProjectionMatrix * uModelViewMatrix * aVertexPosition;
+                gl_Position = projection * modelView * vec4(pos, 1.0);
+                texCoords = uv;
             }
         `;
 
         const fsSource = `
             precision mediump float;
 
+            uniform sampler2D tex0;
+
+            varying vec2 texCoords;
+
             void main() {
-                gl_FragColor = vec4(1.0, 1.0, 1.0, 1.0);
+                gl_FragColor = vec4(texCoords, 1.0, 1.0);
             }
         `;
 
@@ -196,11 +207,12 @@ function Driver(gl, width, height) {
         return {
             program: shaderProgram,
             attribs: {
-                vertex: gl.getAttribLocation(shaderProgram, 'aVertexPosition'),
+                vertex: gl.getAttribLocation(shaderProgram, 'pos'),
+                texCoords: gl.getAttribLocation(shaderProgram, 'uv'),
             },
             uniforms: {
-                modelView: gl.getUniformLocation(shaderProgram, 'uModelViewMatrix'),
-                projection: gl.getUniformLocation(shaderProgram, 'uProjectionMatrix'),
+                modelView: gl.getUniformLocation(shaderProgram, 'modelView'),
+                projection: gl.getUniformLocation(shaderProgram, 'projection'),
             },
         };
     }

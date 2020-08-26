@@ -27,6 +27,7 @@ async function main() {
     // Loading interface
     gui.bmpf.loadingScreen(gui.strings.base[1], 6.0);
     await gui.preloadMedia();
+    // await gfx.preloadMedia();
 
     // Loading materials
     gui.bmpf.loadingScreen("Loading Materials", 18.0);
