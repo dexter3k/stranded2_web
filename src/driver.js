@@ -115,11 +115,6 @@ function Driver(gl, width, height, cam) {
         mat4.translate(modelViewMatrix, modelViewMatrix, [-worldSize * terrain.size / 2, -worldHeight / 2, -worldSize * terrain.size / 2]);
         mat4.scale(modelViewMatrix, modelViewMatrix, [worldSize, worldHeight, worldSize]);
 
-        this.camera.pos[0] = +445;
-        this.camera.pos[1] = +95 + 16;
-        this.camera.pos[2] = +391;
-        this.camera.yaw    = 142;
-        this.camera.pitch  = -3;
         const viewMatrix = this.camera.buildView();
 
         mat4.multiply(modelViewMatrix, viewMatrix, modelViewMatrix);

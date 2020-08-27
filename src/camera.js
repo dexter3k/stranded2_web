@@ -8,6 +8,19 @@ function Camera(fov, aspect) {
 	this.yaw   = 0.0;
 	this.pitch = 0.0;
 
+	this.move = function(forward, right) {
+		const yaw = (this.yaw) / 180.0 * Math.PI;
+		const pitch = (this.pitch) / 180.0 * Math.PI;
+
+		this.pos[2] -= Math.sin(yaw - Math.PI / 2) * forward;
+		this.pos[0] -= Math.cos(yaw - Math.PI / 2) * forward;
+
+		this.pos[2] += Math.sin(yaw) * right;
+		this.pos[0] += Math.cos(yaw) * right;
+
+		this.pos[1] -= Math.sin(pitch) * forward;
+	};
+
 	this.buildProjection = function() {
 		const fov_rad = this.fov / 180.0 * Math.PI;
 		const projection = mat4.create();

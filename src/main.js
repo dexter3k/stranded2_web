@@ -8,6 +8,26 @@ function sleep(ms) {
 
 async function main() {
     const canvas = document.querySelector("#glCanvas");
+    let dragging = false;
+    let lastX = undefined;
+    let lastY = undefined;
+
+    canvas.onmousedown = (e) => {
+        dragging = true;
+        lastX = e.offsetX;
+        lastY = e.offsetY;
+    };
+    canvas.onmouseup = (e) => {
+        if (dragging) {
+            dragging = false;
+        }
+    };
+    canvas.onmouseout = (e) => {
+        if (dragging) {
+            dragging = false;
+        }
+    };
+
     const gl = canvas.getContext("webgl");
     if (gl === null) {
         alert("Unable to initialize WebGL. Your browser or machine may not support it.");
@@ -15,6 +35,38 @@ async function main() {
     }
 
     const cam = new Camera(74.75, gl.drawingBufferWidth / gl.drawingBufferHeight);
+    cam.pos[0] = +445;
+    cam.pos[1] = +95 + 16;
+    cam.pos[2] = +391;
+    cam.yaw    = 142;
+    cam.pitch  = -3;
+    canvas.onmousemove = (e) => {
+        if (dragging) {
+            const dx = e.offsetX - lastX;
+            const dy = e.offsetY - lastY;
+            lastX = e.offsetX;
+            lastY = e.offsetY;
+            cam.yaw += -dx * 0.5;
+            cam.pitch += dy * 0.5;
+        }
+    };
+    let w = false;
+    let s = false;
+    let a = false;
+    let d = false;
+    window.onkeydown = (e) => {
+        if (e.code == "KeyW") { w = true; }
+        if (e.code == "KeyS") { s = true; }
+        if (e.code == "KeyA") { a = true; }
+        if (e.code == "KeyD") { d = true; }
+    };
+    window.onkeyup = (e) => {
+        if (e.code == "KeyW") { w = false; }
+        if (e.code == "KeyS") { s = false; }
+        if (e.code == "KeyA") { a = false; }
+        if (e.code == "KeyD") { d = false; }
+    };
+
     const driver = new Driver(gl, gl.drawingBufferWidth, gl.drawingBufferHeight, cam);
     const gui = new Gui(driver);
     const scene = new Scene(gui, driver);
@@ -66,11 +118,19 @@ async function main() {
         }
         const deltaTime = t - start;
         avgDelta = avgDelta * 0.9 + deltaTime * 0.1;
-
         start = t;
+
+        let mot = vec2.create();
+        if (w) { mot[0] += 1.0; }
+        if (s) { mot[0] -= 1.0; }
+        if (a) { mot[1] -= 1.0; }
+        if (d) { mot[1] += 1.0; }
+        vec2.normalize(mot, mot);
+        cam.move(mot[0] * deltaTime, mot[1] * deltaTime);
+
         driver.clearScene();
         world.render(0.0);
-        gui.bmpf.centeredText(400, 300, Math.round(1000.0 / avgDelta) + " FPS", 0);
+        gui.bmpf.centeredText(400, 20, Math.round(1000.0 / avgDelta) + " FPS", 0);
         window.requestAnimationFrame(anim);
     };
 
