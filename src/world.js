@@ -12,6 +12,7 @@ function World(scene) {
     this.init = function(vars, terrain) {
         this.vars = vars;
         this.terrain = new Terrain(scene.driver, terrain.heightmap);
+        scene.driver.setTerrainColormap(terrain.colormap);
     };
 
     this.freezeTime = function(freeze) {

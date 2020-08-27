@@ -23,6 +23,43 @@ function Driver(gl, width, height) {
     const default3DProgram = buildDefault3DProgram();
     const buffersImage = buildImageBuffers();
 
+    this.preloadMedia = async function() {
+        const terrainVSSource = await (await fetch("src/shaders/terrain.vs")).text();
+        const terrainFSSource = await (await fetch("src/shaders/terrain.fs")).text();
+        const terrainProgram = initShaderProgram(gl, terrainVSSource, terrainFSSource);
+
+        this.terrainProgram = {
+            program: terrainProgram,
+            attribs: {
+                pos: gl.getAttribLocation(terrainProgram, 'pos'),
+                uv:  gl.getAttribLocation(terrainProgram, 'uv'),
+            },
+            uniforms: {
+                modelView:  gl.getUniformLocation(terrainProgram, 'modelView'),
+                projection: gl.getUniformLocation(terrainProgram, 'projection'),
+                baseColor:  gl.getUniformLocation(terrainProgram, 'baseColor'),
+                colorMap:   gl.getUniformLocation(terrainProgram, 'colorMap'),
+                detailMap:  gl.getUniformLocation(terrainProgram, 'detailMap'),
+                highResMap: gl.getUniformLocation(terrainProgram, 'highResMap'),
+            },
+        };
+
+        this.textures = await loadTextures(gl, "assets/Stranded II/", [
+            "sys/gfx/terraindirt.bmp",
+            "sys/gfx/terrainstructure.bmp",
+        ]);
+        this.textures["$colorMap"] = loadCustomTextureRGBA(
+            gl, new Uint8ClampedArray([0xff, 0xff, 0xff, 0xff]), 1, 1);
+        console.log(this.textures);
+    };
+
+    this.setTerrainColormap = function(data, width, height) {
+        if (this.textures["$colorMap"] instanceof WebGLTexture) {
+            gl.deleteTexture(this.textures["$colorMap"]);
+        }
+        this.textures["$colorMap"] = loadCustomTextureRGBA(gl, new Uint8ClampedArray(data.data), data.size, data.size);
+    };
+
     this.clearScene = function() {
         gl.enable(gl.DEPTH_TEST);
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
@@ -64,6 +101,7 @@ function Driver(gl, width, height) {
     this.drawTerrain = function(terrain) {
         go3D();
 
+        gl.useProgram(this.terrainProgram.program);
 
         const fieldOfView = 74.75 / 180 * Math.PI;
         const aspect = gl.canvas.clientWidth / gl.canvas.clientHeight;
@@ -76,7 +114,7 @@ function Driver(gl, width, height) {
             projectionMatrix[10] = -projectionMatrix[10]; // zf / (zf - zn) vs zf / (zn - zf)
             projectionMatrix[11] = -projectionMatrix[11]; // 1 vs -1
         }
-        gl.uniformMatrix4fv(default3DProgram.uniforms.projection, false, projectionMatrix);
+        gl.uniformMatrix4fv(this.terrainProgram.uniforms.projection, false, projectionMatrix);
 
         const modelViewMatrix = mat4.create();
         const worldSize = 64.0;
@@ -95,17 +133,41 @@ function Driver(gl, width, height) {
         mat4.translate(viewMatrix, viewMatrix, [-camX, -camY, -camZ]);
 
         mat4.multiply(modelViewMatrix, viewMatrix, modelViewMatrix);
-        gl.uniformMatrix4fv(default3DProgram.uniforms.modelView, false, modelViewMatrix);
+        gl.uniformMatrix4fv(this.terrainProgram.uniforms.modelView, false, modelViewMatrix);
 
 
         const data = terrain.getRenderData();
         gl.bindBuffer(gl.ARRAY_BUFFER, data.buffer);
 
-        gl.enableVertexAttribArray(default3DProgram.attribs.vertex);
-        gl.vertexAttribPointer(default3DProgram.attribs.vertex, 3, gl.FLOAT, false, 5 * 4, 0);
+        gl.enableVertexAttribArray(this.terrainProgram.attribs.pos);
+        gl.vertexAttribPointer(this.terrainProgram.attribs.pos, 3, gl.FLOAT, false, 5 * 4, 0);
 
-        gl.enableVertexAttribArray(default3DProgram.attribs.texCoords);
-        gl.vertexAttribPointer(default3DProgram.attribs.texCoords, 2, gl.FLOAT, false, 5 * 4, 3 * 4)
+        gl.enableVertexAttribArray(this.terrainProgram.attribs.uv);
+        gl.vertexAttribPointer(this.terrainProgram.attribs.uv, 2, gl.FLOAT, false, 5 * 4, 3 * 4);
+
+        gl.activeTexture(gl.TEXTURE0);
+        gl.bindTexture(gl.TEXTURE_2D, this.textures["$colorMap"]);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+
+        gl.activeTexture(gl.TEXTURE1);
+        gl.bindTexture(gl.TEXTURE_2D, this.textures["sys/gfx/terraindirt.bmp"]);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+
+        gl.activeTexture(gl.TEXTURE2);
+        gl.bindTexture(gl.TEXTURE_2D, this.textures["sys/gfx/terrainstructure.bmp"]);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+
+        gl.uniform3f(this.terrainProgram.uniforms.baseColor, 240.0 / 255.0, 240.0 / 255.0, 240.0 / 255.0);
+        gl.uniform1i(this.terrainProgram.uniforms.colorMap, 0);
+        gl.uniform1i(this.terrainProgram.uniforms.detailMap, 1);
+        gl.uniform1i(this.terrainProgram.uniforms.highResMap, 2);
 
         gl.drawArrays(gl.TRIANGLES, 0, data.count);
     };
@@ -192,33 +254,46 @@ function Driver(gl, width, height) {
 
             void main() {
                 gl_Position = projection * modelView * vec4(pos, 1.0);
-                texCoords = uv;
+                texCoords = vec2(uv.x, 1.0 - uv.y);
             }
         `;
 
         const fsSource = `
             precision mediump float;
 
-            uniform sampler2D tex0;
+            uniform vec3      baseColor;
+            uniform sampler2D colorMap;
+            uniform sampler2D detailMap;
+            uniform sampler2D highResMap;
 
             varying vec2 texCoords;
 
             void main() {
-                gl_FragColor = vec4(texCoords, 1.0, 1.0);
+                vec3 col = vec3(1.0, 1.0, 1.0);
+                col = col * baseColor;
+                col = col * texture2D(colorMap, texCoords).xyz;
+                col = col * texture2D(detailMap, texCoords * 64.0).xyz;
+                col = col * texture2D(highResMap, texCoords * 64.0).xyz;
+                col *= 2.0;
+                gl_FragColor = vec4(col, 1.0);
             }
         `;
 
-        const shaderProgram = initShaderProgram(gl, vsSource, fsSource);
+        const program = initShaderProgram(gl, vsSource, fsSource);
 
         return {
-            program: shaderProgram,
+            program: program,
             attribs: {
-                vertex: gl.getAttribLocation(shaderProgram, 'pos'),
-                texCoords: gl.getAttribLocation(shaderProgram, 'uv'),
+                pos: gl.getAttribLocation(program, 'pos'),
+                uv:  gl.getAttribLocation(program, 'uv'),
             },
             uniforms: {
-                modelView: gl.getUniformLocation(shaderProgram, 'modelView'),
-                projection: gl.getUniformLocation(shaderProgram, 'projection'),
+                modelView:  gl.getUniformLocation(program, 'modelView'),
+                projection: gl.getUniformLocation(program, 'projection'),
+                baseColor:  gl.getUniformLocation(program, 'baseColor'),
+                colorMap:   gl.getUniformLocation(program, 'colorMap'),
+                detailMap:  gl.getUniformLocation(program, 'detailMap'),
+                highResMap: gl.getUniformLocation(program, 'highResMap'),
             },
         };
     }

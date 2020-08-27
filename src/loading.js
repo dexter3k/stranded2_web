@@ -68,13 +68,17 @@ async function loadMap(path, world, gui) {
 
     let colormap = {};
     colormap.size = stream.readInt();
-    colormap.data = [];
+    colormap.data = new Array(colormap.size * colormap.size * 4);
     for (let x = 0; x < colormap.size; x++) {
-        for (let y = 0; y < colormap.size; y++) {
-            colormap.data[colormap.size * y + x] = 0;
-            stream.skipBytes(3); // R G B of the image
+        for (let z = 0; z < colormap.size; z++) {
+            const baseIndex = (colormap.size * (colormap.size - z - 1) + x) * 4
+            colormap.data[baseIndex + 0] = stream.readByte();
+            colormap.data[baseIndex + 1] = stream.readByte();
+            colormap.data[baseIndex + 2] = stream.readByte();
+            colormap.data[baseIndex + 3] = 0xff;
         }
     }
+    console.log("Colormap:");
     console.log(colormap);
 
     // Loading heightmap
