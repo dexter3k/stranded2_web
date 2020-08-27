@@ -14,7 +14,8 @@ async function main() {
         return;
     }
 
-    const driver = new Driver(gl, gl.drawingBufferWidth, gl.drawingBufferHeight);
+    const cam = new Camera(74.75, gl.drawingBufferWidth / gl.drawingBufferHeight);
+    const driver = new Driver(gl, gl.drawingBufferWidth, gl.drawingBufferHeight, cam);
     const gui = new Gui(driver);
     const scene = new Scene(gui, driver);
     await gui.loadFonts();
@@ -57,8 +58,23 @@ async function main() {
     // scene.update(1 / 60);
     // scene.render(1 / 60);
 
-    driver.clearScene();
-    world.render(0.0);
+    let start = undefined;
+    let avgDelta = 1.0;
+    const anim = (t) => {
+        if (start === undefined) {
+            start = t;
+        }
+        const deltaTime = t - start;
+        avgDelta = avgDelta * 0.9 + deltaTime * 0.1;
+
+        start = t;
+        driver.clearScene();
+        world.render(0.0);
+        gui.bmpf.centeredText(400, 300, Math.round(1000.0 / avgDelta) + " FPS", 0);
+        window.requestAnimationFrame(anim);
+    };
+
+    window.requestAnimationFrame(anim);
 
     function spawnPlayer() {
         // Spawn at specified or random SpawnInfo

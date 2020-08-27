@@ -62,10 +62,10 @@ function Terrain(driver, data) {
 			console.log("Got render buffer!");
 
 			this.dirty = false;
-		}
 
-		console.log(this.buffer);
-		console.log(this.buffer.length);
+			console.log(this.buffer);
+			console.log(this.buffer.length);
+		}
 
 		return {
 			buffer: this.buffer,

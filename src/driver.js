@@ -1,4 +1,4 @@
-function Driver(gl, width, height) {
+function Driver(gl, width, height, cam) {
     this.gl = gl;
     this.width = width;
     this.height = height;
@@ -23,7 +23,7 @@ function Driver(gl, width, height) {
     const default3DProgram = buildDefault3DProgram();
     const buffersImage = buildImageBuffers();
 
-    this.camera = new Camera(74.75, gl.canvas.clientWidth / gl.canvas.clientHeight);
+    this.camera = cam;
 
     this.preloadMedia = async function() {
         const terrainVSSource = await (await fetch("src/shaders/terrain.vs")).text();
@@ -70,6 +70,7 @@ function Driver(gl, width, height) {
     this.drawImage = function(target, source, textureSize, texture) {
         go2D();
 
+        gl.activeTexture(gl.TEXTURE0);
         gl.bindTexture(gl.TEXTURE_2D, texture);
 
         gl.bindBuffer(gl.ARRAY_BUFFER, buffersImage.position);
