@@ -23,6 +23,8 @@ function Driver(gl, width, height) {
     const default3DProgram = buildDefault3DProgram();
     const buffersImage = buildImageBuffers();
 
+    this.camera = new Camera(74.75, gl.canvas.clientWidth / gl.canvas.clientHeight);
+
     this.preloadMedia = async function() {
         const terrainVSSource = await (await fetch("src/shaders/terrain.vs")).text();
         const terrainFSSource = await (await fetch("src/shaders/terrain.fs")).text();
@@ -37,7 +39,7 @@ function Driver(gl, width, height) {
             uniforms: {
                 modelView:  gl.getUniformLocation(terrainProgram, 'modelView'),
                 projection: gl.getUniformLocation(terrainProgram, 'projection'),
-                baseColor:  gl.getUniformLocation(terrainProgram, 'baseColor'),
+                mapScale:   gl.getUniformLocation(terrainProgram, 'mapScale'),
                 colorMap:   gl.getUniformLocation(terrainProgram, 'colorMap'),
                 detailMap:  gl.getUniformLocation(terrainProgram, 'detailMap'),
                 highResMap: gl.getUniformLocation(terrainProgram, 'highResMap'),
@@ -103,34 +105,21 @@ function Driver(gl, width, height) {
 
         gl.useProgram(this.terrainProgram.program);
 
-        const fieldOfView = 74.75 / 180 * Math.PI;
-        const aspect = gl.canvas.clientWidth / gl.canvas.clientHeight;
-        const zNear = 0.1;
-        const zFar = 10000.0;
-        const projectionMatrix = mat4.create();
-        mat4.perspective(projectionMatrix, fieldOfView, aspect, zNear, zFar);
-        const rightHanded = true;
-        if (rightHanded) {
-            projectionMatrix[10] = -projectionMatrix[10]; // zf / (zf - zn) vs zf / (zn - zf)
-            projectionMatrix[11] = -projectionMatrix[11]; // 1 vs -1
-        }
+        const projectionMatrix = this.camera.buildProjection();
         gl.uniformMatrix4fv(this.terrainProgram.uniforms.projection, false, projectionMatrix);
 
         const modelViewMatrix = mat4.create();
         const worldSize = 64.0;
         const worldHeight = 3200.0;
-        mat4.translate(modelViewMatrix, modelViewMatrix, [-worldSize * 32 / 2, -worldHeight / 2, -worldSize * 32 / 2]);
+        mat4.translate(modelViewMatrix, modelViewMatrix, [-worldSize * terrain.size / 2, -worldHeight / 2, -worldSize * terrain.size / 2]);
         mat4.scale(modelViewMatrix, modelViewMatrix, [worldSize, worldHeight, worldSize]);
 
-        const viewMatrix = mat4.create();
-        const camX = +445;
-        const camY = +95 + 16;
-        const camZ = +391;
-        const yaw  = 142;
-        const pitch = -3;
-        mat4.rotate(viewMatrix, viewMatrix, pitch / 180.0 * Math.PI, [-1.0, 0.0, 0.0]);
-        mat4.rotate(viewMatrix, viewMatrix, yaw / 180.0 * Math.PI, [0.0, 1.0, 0.0]);
-        mat4.translate(viewMatrix, viewMatrix, [-camX, -camY, -camZ]);
+        this.camera.pos[0] = +445;
+        this.camera.pos[1] = +95 + 16;
+        this.camera.pos[2] = +391;
+        this.camera.yaw    = 142;
+        this.camera.pitch  = -3;
+        const viewMatrix = this.camera.buildView();
 
         mat4.multiply(modelViewMatrix, viewMatrix, modelViewMatrix);
         gl.uniformMatrix4fv(this.terrainProgram.uniforms.modelView, false, modelViewMatrix);
@@ -164,7 +153,7 @@ function Driver(gl, width, height) {
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
 
-        gl.uniform3f(this.terrainProgram.uniforms.baseColor, 240.0 / 255.0, 240.0 / 255.0, 240.0 / 255.0);
+        gl.uniform1f(this.terrainProgram.uniforms.mapScale, terrain.size);
         gl.uniform1i(this.terrainProgram.uniforms.colorMap, 0);
         gl.uniform1i(this.terrainProgram.uniforms.detailMap, 1);
         gl.uniform1i(this.terrainProgram.uniforms.highResMap, 2);
