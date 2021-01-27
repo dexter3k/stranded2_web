@@ -126,7 +126,7 @@ async function main() {
         if (a) { mot[1] -= 1.0; }
         if (d) { mot[1] += 1.0; }
         vec2.normalize(mot, mot);
-        cam.move(mot[0] * deltaTime, mot[1] * deltaTime);
+        cam.move(mot[0], mot[1], deltaTime);
 
         driver.clearScene();
         world.render(0.0);
