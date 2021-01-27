@@ -7,6 +7,7 @@ function Terrain(driver, data) {
 	this.buffer = null;
 	this.elements = 0;
 
+	// todo: also generate normals
 	this.getRenderData = function() {
 		const gl = driver.gl;
 
@@ -56,15 +57,9 @@ function Terrain(driver, data) {
 					}
 				}
 			}
-			console.log(points);
 			gl.bufferData(gl.ARRAY_BUFFER, points, gl.STATIC_DRAW);
 
-			console.log("Got render buffer!");
-
 			this.dirty = false;
-
-			console.log(this.buffer);
-			console.log(this.buffer.length);
 		}
 
 		return {

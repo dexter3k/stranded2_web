@@ -83,6 +83,10 @@ function BinaryStream(buffer) {
         this.position -= 4;
         return null;
     };
+
+    this.remaining = function() {
+        return this.buffer.byteLength - this.position;
+    };
 }
 
 // const stream = new BinaryStream(temp1);

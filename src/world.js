@@ -13,6 +13,9 @@ function World(scene) {
         this.vars = vars;
         this.terrain = new Terrain(scene.driver, terrain.heightmap);
         scene.driver.setTerrainColormap(terrain.colormap);
+
+        // also run some scripts afaik
+        // on:preload?
     };
 
     this.freezeTime = function(freeze) {
