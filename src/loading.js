@@ -142,6 +142,7 @@ async function loadMap(path, world, gui) {
             maxHealth: stream.readFloat(),
             timer:     stream.readInt(),
         };
+        world.placeObject(object);
         // console.log(object);
     }
 

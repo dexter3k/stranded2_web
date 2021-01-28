@@ -1,5 +1,8 @@
-function World(scene) {
+function World(scene, obj) {
     this.scene = scene;
+    this.objectTypes = obj;
+
+    this.objects = {};
 
     this.update = function(deltaTime) {
         // ...
@@ -24,5 +27,15 @@ function World(scene) {
 
     this.setTimedate = function(day, hour, minute) {
         this.day = day; this.hour = hour; this.minute = minute;
+    };
+
+    this.placeObject = function(object) {
+        if (this.objectTypes[object.type] == undefined) {
+            console.log("Addding unknown object " + object.type);
+            return false;
+        }
+
+        this.objects[object.id] = object;
+        return true;
     };
 }

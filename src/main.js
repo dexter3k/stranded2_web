@@ -71,7 +71,6 @@ async function main() {
     const gui = new Gui(driver);
     const scene = new Scene(gui, driver);
     await gui.loadFonts();
-    const world = new World(scene);
 
     // Loading strings
     gui.bmpf.loadingScreen("Loading Translations", 0.0);
@@ -106,6 +105,8 @@ async function main() {
 
     // Loading infos
     gui.bmpf.loadingScreen(gui.strings.base[6], 98.0);
+
+    const world = new World(scene, obj);
 
     await startMenu();
 
