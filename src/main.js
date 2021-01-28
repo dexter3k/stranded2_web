@@ -87,9 +87,16 @@ async function main() {
 
     // Loading stuff
     gui.bmpf.loadingScreen(gui.strings.base[2], 19.0);
+    // load sys/keys.inf
+    // load sys/states.inf
+    // load sys/lightcycle.inf
+    // load sys/game*.inf
+    // load sys/groups.inf
 
     // Loading objects
     gui.bmpf.loadingScreen(gui.strings.base[3], 20.0);
+    const obj = new Objects();
+    await obj.load();
 
     // Loading units
     gui.bmpf.loadingScreen(gui.strings.base[4], 60.0);
