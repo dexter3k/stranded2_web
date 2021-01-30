@@ -1,0 +1,119 @@
+(*main.Model)(0xc000040080)({
+	Version: (uint32) 1,
+	Textures: ([]*main.Texture) (len=2 cap=2) {
+		(*main.Texture)(0xc00005e540)({
+			Path: (string) (len=12) ".\\struc3.bmp",
+			Flags: (uint32) 1,
+			Blend: (uint32) 2,
+			PosX: (float32) 0,
+			PosY: (float32) 0,
+			ScaleX: (float32) 1,
+			ScaleY: (float32) 1,
+			Rotation: (float32) 0
+		}),
+		(*main.Texture)(0xc00005e570)({
+			Path: (string) (len=16) ".\\hempleaf_a.png",
+			Flags: (uint32) 1,
+			Blend: (uint32) 2,
+			PosX: (float32) 0,
+			PosY: (float32) 0,
+			ScaleX: (float32) 1,
+			ScaleY: (float32) 1,
+			Rotation: (float32) 0
+		})
+	},
+	Brushes: ([]*main.Brush) (len=2 cap=2) {
+		(*main.Brush)(0xc00008a0f0)({
+			Name: (string) (len=10) "Material01",
+			R: (float32) 0.25490198,
+			G: (float32) 0.4784314,
+			B: (float32) 0.027450982,
+			A: (float32) 1,
+			Shine: (float32) 0,
+			Blend: (uint32) 1,
+			Fx: (uint32) 0,
+			Textures: ([]int) (len=1 cap=1) {
+				(int) 0
+			}
+		}),
+		(*main.Brush)(0xc00008a140)({
+			Name: (string) (len=10) "Material02",
+			R: (float32) 0.8,
+			G: (float32) 0.8,
+			B: (float32) 0.8,
+			A: (float32) 0.98999995,
+			Shine: (float32) 0,
+			Blend: (uint32) 1,
+			Fx: (uint32) 0,
+			Textures: ([]int) (len=1 cap=1) {
+				(int) 1
+			}
+		})
+	},
+	Root: (*main.Node)(0xc00009e000)({
+		Name: (string) (len=4) "ROOT",
+		PosX: (float32) 0,
+		PosY: (float32) 0,
+		PosZ: (float32) -0,
+		ScaleX: (float32) 1,
+		ScaleY: (float32) 1,
+		ScaleZ: (float32) 1,
+		RotationW: (float32) 1,
+		RotationX: (float32) 0,
+		RotationY: (float32) 0,
+		RotationZ: (float32) -0,
+		Kind: (*main.Mesh)(0xc00005e5a0)({
+			Brush: (int) -1,
+			Vertices: (*main.Vertices)(0xc00005e5d0)({
+				Flags: (uint32) 0,
+				Sets: (uint32) 1,
+				SetSize: (uint32) 2,
+				Data: ([]float32) (len=20 cap=20) {
+					(float32) -6.2664175,
+					(float32) 2.003409,
+					(float32) 5.0340023,
+					(float32) 0,
+					(float32) 0,
+
+					(float32) -6.3905506,
+					(float32) 1.3284798,
+					(float32) -5.3537197,
+					(float32) 0.0062499642,
+					(float32) 0.984375,
+
+					(float32) 6.2089615,
+					(float32) 1.2914734,
+					(float32) 5.3590717,
+					(float32) 1,
+					(float32) 0,
+
+					(float32) 6.0848293,
+					(float32) 0.6165471,
+					(float32) -5.0286493,
+					(float32) 1.0062499,
+					(float32) 0.984375
+				}
+			}),
+			Triangles: ([]*main.Triangles) (len=1 cap=1) {
+				(*main.Triangles)(0xc000004640)({
+					Brush: (int) 1,
+					Data: ([]uint32) (len=6 cap=6) {
+						(uint32) 0,
+						(uint32) 2,
+						(uint32) 1,
+						(uint32) 1,
+						(uint32) 2,
+						(uint32) 0
+					}
+				})
+			}
+		}),
+		Children: ([]*main.Node) <nil>,
+		Keys: ([]*main.Keys) <nil>,
+		Animation: (*main.Animation)(0xc000012374)({
+			Flags: (uint32) 0,
+			Frames: (uint32) 30,
+			FPS: (float32) 60
+		})
+	})
+})
