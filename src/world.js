@@ -14,6 +14,17 @@ function World(scene, obj) {
         // render infinite water plane
         this.scene.driver.drawTerrain(this.terrain);
         this.scene.render();
+
+        for (const id in this.objects) {
+            const obj = this.objects[id];
+            const type = this.objectTypes[obj.type];
+
+            const modelMatrix = mat4.create();
+            mat4.translate(modelMatrix, modelMatrix, [obj.x, 100, obj.z]);
+            mat4.rotate(modelMatrix, modelMatrix, obj.yaw * 0.0174533, [0, -1, 0]);
+            mat4.scale(modelMatrix, modelMatrix, [type.x, type.y, type.z]);
+            this.scene.driver.drawModel(modelMatrix, type.visual);
+        }
     };
 
     this.init = function(vars, terrain) {

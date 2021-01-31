@@ -115,11 +115,6 @@ async function main() {
     // Rules: no await/async in logic or rendering code, everything event related
     // should be preprocessed or ready before frame update
 
-    // scene.update(1 / 60);
-    // scene.render(1 / 60);
-
-    let model = 0;
-
     let start = undefined;
     let avgDelta = 1.0;
     const anim = (t) => {
@@ -138,24 +133,8 @@ async function main() {
         vec2.normalize(mot, mot);
         cam.move(mot[0], mot[1], deltaTime);
 
-        // console.log(cam.pos);
-
         driver.clearScene();
         world.render(0.0);
-        // driver.drawTestModel();
-        model += deltaTime / 1000 * 2;
-        while (model > obj.ids.length) {
-            model -= obj.ids.length;
-        }
-
-        const modelMatrix = mat4.create();
-        mat4.translate(modelMatrix, modelMatrix, [0, 0, 0]);
-
-        const object = obj[obj.ids[Math.floor(model)]];
-        mat4.scale(modelMatrix, modelMatrix, [object.x, object.y, object.z]);
-
-        driver.drawModel(modelMatrix, object.visual);
-        gui.bmpf.centeredText(400, 60, ""+object.id, 0);
 
         gui.bmpf.centeredText(400, 20, Math.round(1000.0 / avgDelta) + " FPS", 0);
         gui.bmpf.centeredText(400, 40, Math.floor(cam.pos[0])+","+Math.floor(cam.pos[1])+","+Math.floor(cam.pos[2]), 0);
