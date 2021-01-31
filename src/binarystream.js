@@ -1,6 +1,11 @@
-function BinaryStream(buffer) {
+function BinaryStream(buffer, position=0, byteLength=null) {
     this.buffer = buffer;
-    this.position = 0;
+    if (byteLength == null) {
+        this.byteLength = buffer.byteLength;
+    } else {
+        this.byteLength = byteLength;
+    }
+    this.position = position;
 
     // Read characters until EOL mark. \r, \n or \r\n
     this.readLine = function() {
@@ -37,7 +42,7 @@ function BinaryStream(buffer) {
     };
 
     this.readUint = function() {
-        if (this.buffer.byteLength - 4 >= this.position) {
+        if (this.byteLength - 4 >= this.position) {
             this.position += 4;
             return (new DataView(this.buffer)).getUint32(this.position-4, true);
         }
@@ -45,7 +50,7 @@ function BinaryStream(buffer) {
     };
 
     this.readInt = function() {
-        if (this.buffer.byteLength - 4 >= this.position) {
+        if (this.byteLength - 4 >= this.position) {
             this.position += 4;
             return (new DataView(this.buffer)).getInt32(this.position-4, true);
         }
@@ -53,7 +58,7 @@ function BinaryStream(buffer) {
     };
 
     this.readFloat = function() {
-        if (this.buffer.byteLength - 4 >= this.position) {
+        if (this.byteLength - 4 >= this.position) {
             this.position += 4;
             return (new DataView(this.buffer)).getFloat32(this.position-4, true);
         }
@@ -69,9 +74,12 @@ function BinaryStream(buffer) {
         return null;
     };
 
-    this.readString = function() {
-        const length = this.readInt();
-        if (this.buffer.byteLength - length >= this.position) {
+    this.readString = function(length = null) {
+        const startPos = this.position;
+        if (length == null) {
+            length = this.readInt();
+        }
+        if (this.byteLength - length >= this.position) {
             let output = "";
             const uint8 = new Uint8Array(this.buffer);
             for (let i = 0; i < length; i++) {
@@ -80,12 +88,45 @@ function BinaryStream(buffer) {
             this.position += length;
             return output;
         }
-        this.position -= 4;
+        this.position = startPos;
         return null;
     };
 
+    this.readZeroTerminatedString = function() {
+        const uint8 = new Uint8Array(this.buffer);
+        let output = "";
+        let hasChars = false;
+        while (uint8[this.position] != undefined) {
+            if (uint8[this.position] == 0) {
+                this.position += 1;
+                return output;
+            }
+            output += String.fromCharCode(uint8[this.position]);
+            hasChars = true;
+            this.position += 1;
+        }
+        return hasChars ? output : null;
+    };
+
+    // 4 bytes tag name as string, 4 bytes length
+    // returns [name, binarystream]
+    // or [null, null]
+    this.readTag = function() {
+        const name = this.readString(4);
+        if (name == null) {
+            return [null, null];
+        }
+        const size = this.readInt();
+        if (size == null) {
+            this.position -= 4;
+            return [null, null];
+        }
+        this.position += size;
+        return [name, new BinaryStream(this.buffer, this.position-size, this.position)];
+    };
+
     this.remaining = function() {
-        return this.buffer.byteLength - this.position;
+        return this.byteLength - this.position;
     };
 }
 

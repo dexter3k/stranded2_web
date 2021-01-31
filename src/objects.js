@@ -1,7 +1,10 @@
 function Objects() {
+	this.ids = [];
+
 	this.parse = function(text) {
 		const stream = new InfStream(text);
 		let obj = null;
+		let hadWarning = false;
 		while (true) {
 			const [line, key, value] = stream.readKeyValuePair();
 			if (line == null) {
@@ -9,8 +12,10 @@ function Objects() {
 			}
 			if (value == null) {
 				if (key != "#" && key != "") {
-					// just ignore I suppose
-					console.log("Failed to parse config line: " + line);
+					if (!hadWarning) {
+						console.log("Failed to parse config line: " + line);
+						hadWarning = true;
+					}
 				}
 				continue;
 			}
@@ -19,17 +24,19 @@ function Objects() {
 			case "id":
 				if (obj != null) {
 					this[obj.id] = obj;
+					this.ids.push(obj.id);
 				}
 
 				const id = parseInt(value);
 				if (isNaN(id)) {
-					console.log("Malformed id, skipping object: " + value);
+					if (!hadWarning) {
+						hadWarning = true;
+						console.log("Malformed id, skipping object: " + value);
+					}
 					obj = null;
 					break;
 				}
-				obj = {
-					id: id,
-				}
+				obj = new Object(id);
 				break;
 			case "mat":
 			case "name":
@@ -54,7 +61,10 @@ function Objects() {
 			case "shine":
 				const fl = parseFloat(value);
 				if (isNaN(fl)) {
-					console.log("Malformed float, skipping key: " + key + " = " + value);
+					if (!hadWarning) {
+						hadWarning = true;
+						console.log("Malformed float, skipping key: " + key + " = " + value);
+					}
 				} else if (obj != null) {
 					if (key == "scale") {
 						obj.x = fl;
@@ -80,7 +90,10 @@ function Objects() {
 			case "b":
 				const integer = parseInt(value);
 				if (isNaN(integer)) {
-					console.log("Malformed int, skipping key: " + key + " = " + value);
+					if (!hadWarning) {
+						hadWarning = true;
+						console.log("Malformed int, skipping key: " + key + " = " + value);
+					}
 				} else if (obj != null) {
 					obj[key] = integer;
 				}
@@ -107,18 +120,21 @@ function Objects() {
 				}
 				break;
 			default:
-				console.log("Ignoring unknown config key: " + key);
+				if (!hadWarning) {
+					console.log("Ignoring unknown config key: " + key);
+					hadWarning = true;
+				}
 				break;
 			}
 		}
 
 		if (obj != null) {
 			this[obj.id] = obj;
+			this.ids.push(obj.id);
 		}
-		console.log(this);
 	};
 
-	this.load = async function() {
+	this.load = async function(driver, gui) {
 		const files = [
 			"sys/objects.inf",
 			"sys/objects_buildings.inf",
@@ -133,6 +149,10 @@ function Objects() {
 		for (let i = 0; i < files.length; i++) {
 			const source = await loadTextAsset("assets/Stranded II/" + files[i]);
 			this.parse(source);
+		}
+		for (let i = 0; i < this.ids.length; i++) {
+			gui.bmpf.loadingScreen(gui.strings.base[3], Math.round(25 + 35 * i / this.ids.length));
+			await this[this.ids[i]].preloadMedia(driver);
 		}
 	};
 }

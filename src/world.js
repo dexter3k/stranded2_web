@@ -9,7 +9,11 @@ function World(scene, obj) {
     };
 
     this.render = function(deltaTime) {
+        // render skybox, clear depth
+        // render infinite ground plane
+        // render infinite water plane
         this.scene.driver.drawTerrain(this.terrain);
+        this.scene.render();
     };
 
     this.init = function(vars, terrain) {
@@ -30,12 +34,17 @@ function World(scene, obj) {
     };
 
     this.placeObject = function(object) {
-        if (this.objectTypes[object.type] == undefined) {
-            console.log("Addding unknown object " + object.type);
+        const type = this.objectTypes[object.type]
+        if (type == undefined) {
+            console.log("Adding unknown object " + object.type);
             return false;
         }
 
+        // type.makeSureModelIsLoaded()
+
         this.objects[object.id] = object;
+        this.scene.addEntity(object.id, object);
+
         return true;
     };
 }
