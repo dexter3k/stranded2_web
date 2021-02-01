@@ -138,6 +138,8 @@ async function main() {
 
         gui.bmpf.centeredText(400, 20, Math.round(1000.0 / avgDelta) + " FPS", 0);
         gui.bmpf.centeredText(400, 40, Math.floor(cam.pos[0])+","+Math.floor(cam.pos[1])+","+Math.floor(cam.pos[2]), 0);
+        gui.bmpf.centeredText(200, 20, ""+world.getTerrainHeight(cam.pos[0], cam.pos[2]), 0);
+        gui.bmpf.centeredText(200, 40, ""+(cam.pos[0]/64+16), 0);
         window.requestAnimationFrame(anim);
     };
 

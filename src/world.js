@@ -20,7 +20,7 @@ function World(scene, obj) {
             const type = this.objectTypes[obj.type];
 
             const modelMatrix = mat4.create();
-            mat4.translate(modelMatrix, modelMatrix, [obj.x, 100, obj.z]);
+            mat4.translate(modelMatrix, modelMatrix, [obj.x, obj.y, obj.z]);
             mat4.rotate(modelMatrix, modelMatrix, obj.yaw * 0.0174533, [0, -1, 0]);
             mat4.scale(modelMatrix, modelMatrix, [type.x, type.y, type.z]);
             this.scene.driver.drawModel(modelMatrix, type.visual);
@@ -57,5 +57,13 @@ function World(scene, obj) {
         this.scene.addEntity(object.id, object);
 
         return true;
+    };
+
+    this.getTerrainHeight = function(x, z) {
+        const worldHeight = 3200;
+        const worldHalfSize = this.terrain.size / 2;
+        x /= 64;
+        z /= 64;
+        return this.terrain.getHeight(x + worldHalfSize, z + worldHalfSize) * worldHeight - worldHeight/2;
     };
 }

@@ -118,6 +118,7 @@ async function loadMap(path, world, gui) {
     }
 
     // We have parsed all basic world visuals which we can now render.
+    console.log(terrain);
     const terrainInfo = {
         heightmap: terrain,
         colormap: colormap,
@@ -136,12 +137,14 @@ async function loadMap(path, world, gui) {
             id:        stream.readInt(),
             type:      longObjects ? stream.readShort() : stream.readByte(),
             x:         stream.readFloat(),
+            y:         100,
             z:         stream.readFloat(),
             yaw:       stream.readFloat(),
             health:    stream.readFloat(),
             maxHealth: stream.readFloat(),
             timer:     stream.readInt(),
         };
+        object.y = world.getTerrainHeight(object.x, object.z);
         world.placeObject(object);
         // console.log(object);
     }
