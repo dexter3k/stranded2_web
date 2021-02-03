@@ -6,7 +6,9 @@ function Driver(gl, width, height, cam) {
     let in2DMode = false;
 
     gl.enable(gl.BLEND);
-    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+    gl.blendEquation(gl.FUNC_ADD);
+    // gl.blendFunc(gl.ONE_MINUS_SRC_ALPHA, gl.ONE);
+    gl.blendFuncSeparate(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA, gl.ONE, gl.ONE);
 
     gl.clearColor(0.0, 0.0, 0.0, 1.0);
     gl.clearDepth(1.0);
@@ -118,7 +120,7 @@ function Driver(gl, width, height, cam) {
                 gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
             }
 
-            gl.uniform3f(default3DProgram.uniforms.baseColor, brush.color[0], brush.color[1], brush.color[2]);
+            gl.uniform4f(default3DProgram.uniforms.baseColor, brush.color[0], brush.color[1], brush.color[2], brush.color[3]);
             gl.uniform1i(default3DProgram.uniforms.colorMap, 0);
 
             gl.drawElements(gl.TRIANGLES, mesh.length, gl.UNSIGNED_SHORT, 0);
@@ -346,16 +348,19 @@ function Driver(gl, width, height, cam) {
         const fsSource = `
             precision mediump float;
 
-            uniform vec3      baseColor;
+            uniform vec4      baseColor;
             uniform sampler2D colorMap;
 
             varying vec2 texCoords;
 
             void main() {
-                vec3 col = vec3(1.0, 1.0, 1.0);
-                col = col * baseColor;
-                col = col * texture2D(colorMap, texCoords).xyz;
-                gl_FragColor = vec4(col, 1.0);
+                vec4 col = baseColor * texture2D(colorMap, texCoords);
+                if (col.a >= 0.5) {
+                    // col.a = 1.0;
+                } else {
+                    discard;
+                }
+                gl_FragColor = col;
             }
         `;
 
