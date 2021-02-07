@@ -8,7 +8,7 @@ function Camera(fov, aspect) {
 	this.yaw   = 0.0;
 	this.pitch = 0.0;
 
-	this.movementSpeed = 1.0;
+	this.movementSpeed = 8 * 64.0 / 1000;
 
 	this.move = function(forward, right, dt) {
 		const yaw = (this.yaw) / 180.0 * Math.PI;

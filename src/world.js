@@ -1,8 +1,10 @@
-function World(scene, obj) {
+function World(scene, obj, unitTypes) {
     this.scene = scene;
     this.objectTypes = obj;
+    this.unitTypes = unitTypes;
 
     this.objects = {};
+    this.units   = {};
 
     this.update = function(deltaTime) {
         // ...
@@ -18,6 +20,17 @@ function World(scene, obj) {
         for (const id in this.objects) {
             const obj = this.objects[id];
             const type = this.objectTypes[obj.type];
+
+            const modelMatrix = mat4.create();
+            mat4.translate(modelMatrix, modelMatrix, [obj.x, obj.y, obj.z]);
+            mat4.rotate(modelMatrix, modelMatrix, obj.yaw * 0.0174533, [0, -1, 0]);
+            mat4.scale(modelMatrix, modelMatrix, [type.x, type.y, type.z]);
+            this.scene.driver.drawModel(modelMatrix, type.visual);
+        }
+
+        for (const id in this.units) {
+            const obj = this.units[id];
+            const type = this.unitTypes[obj.type];
 
             const modelMatrix = mat4.create();
             mat4.translate(modelMatrix, modelMatrix, [obj.x, obj.y, obj.z]);
@@ -45,7 +58,7 @@ function World(scene, obj) {
     };
 
     this.placeObject = function(object) {
-        const type = this.objectTypes[object.type]
+        const type = this.objectTypes[object.type];
         if (type == undefined) {
             console.log("Adding unknown object " + object.type);
             return false;
@@ -57,6 +70,28 @@ function World(scene, obj) {
         this.scene.addEntity(object.id, object);
 
         return true;
+    };
+
+    this.placeUnit = function(unit) {
+        const type = this.unitTypes[unit.type];
+        if (type == undefined) {
+            console.log("Adding unknown unit " + unit.type);
+            return false;
+        }
+
+        this.units[unit.id] = unit;
+    };
+
+    this.placeItem = function(item) {
+        // ...
+    };
+
+    this.placeInfo = function(info) {
+        // ...
+    };
+
+    this.placeState = function(state) {
+        // ...
     };
 
     this.getTerrainHeight = function(x, z) {

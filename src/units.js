@@ -1,4 +1,4 @@
-function Objects() {
+function Units() {
 	this.ids = [];
 
 	this.parse = function(text) {
@@ -36,7 +36,7 @@ function Objects() {
 					obj = null;
 					break;
 				}
-				obj = new Object(id, "object");
+				obj = new Object(id, "unit");
 				break;
 			case "mat":
 			case "name":
@@ -44,7 +44,6 @@ function Objects() {
 			case "icon":
 			case "model":
 			case "behaviour":
-			case "detailtex":
 				if (obj != null) {
 					obj[key] = value;
 				}
@@ -54,11 +53,12 @@ function Objects() {
 			case "z":
 			case "scale":
 			case "health":
-			case "swayspeed":
-			case "swaypower":
 			case "healthchange":
 			case "alpha":
 			case "shine":
+			case "colxr":
+			case "colyr":
+			case "store":
 				const fl = parseFloat(value);
 				if (isNaN(fl)) {
 					if (!hadWarning) {
@@ -82,12 +82,13 @@ function Objects() {
 			case "fx":
 			case "col":
 			case "maxweight":
-			case "growtime":
 			case "editor":
 			case "autofade":
 			case "r":
 			case "g":
 			case "b":
+			case "gt":
+			case "loopmoveani":
 				const integer = parseInt(value);
 				if (isNaN(integer)) {
 					if (!hadWarning) {
@@ -98,7 +99,6 @@ function Objects() {
 					obj[key] = integer;
 				}
 				break;
-			case "description":
 			case "script":
 				const startKey = key;
 				let script = value;
@@ -136,22 +136,14 @@ function Objects() {
 
 	this.load = async function(driver, gui) {
 		const files = [
-			"sys/objects.inf",
-			"sys/objects_buildings.inf",
-			"sys/objects_bushes.inf",
-			"sys/objects_flowers.inf",
-			"sys/objects_gras.inf",
-			"sys/objects_palms.inf",
-			"sys/objects_stone.inf",
-			"sys/objects_stuff.inf",
-			"sys/objects_trees.inf",
+			"sys/units.inf",
 		];
 		for (let i = 0; i < files.length; i++) {
 			const source = await loadTextAsset("assets/Stranded II/" + files[i]);
 			this.parse(source);
 		}
 		for (let i = 0; i < this.ids.length; i++) {
-			gui.bmpf.loadingScreen(gui.strings.base[3], Math.round(25 + 35 * i / this.ids.length));
+			gui.bmpf.loadingScreen(gui.strings.base[4], Math.round(65 + 15 * i / this.ids.length));
 			await this[this.ids[i]].preloadMedia(driver);
 		}
 	};

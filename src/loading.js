@@ -146,7 +146,6 @@ async function loadMap(path, world, gui) {
         };
         object.y = world.getTerrainHeight(object.x, object.z);
         world.placeObject(object);
-        // console.log(object);
     }
 
     // Loading units
@@ -169,7 +168,7 @@ async function loadMap(path, world, gui) {
             aiX:       stream.readFloat(),
             aiZ:       stream.readFloat(),
         };
-        // console.log(unit);
+        world.placeUnit(unit);
     }
 
     // Loading items
@@ -190,7 +189,7 @@ async function loadMap(path, world, gui) {
             unknown2: stream.readByte(),
             unknown3: stream.readInt(),
         };
-        // console.log(item);
+        world.placeItem(item);
     }
 
     // Loading infos
@@ -208,7 +207,7 @@ async function loadMap(path, world, gui) {
             yaw:   stream.readFloat(),
             data:  stream.readString(),
         };
-        // console.log(info);
+        world.placeInfo(info);
     }
 
     // Loading states
@@ -230,7 +229,7 @@ async function loadMap(path, world, gui) {
             float:  stream.readFloat(),
             string: stream.readString(),
         };
-        // console.log(state);
+        world.placeState(state);
     }
 
     // Loading extensions

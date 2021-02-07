@@ -1,7 +1,8 @@
-function Object(id) {
+function Object(id, category) {
 	this.id = id;
 	this.model = null;
 	this.visual = null;
+	this.category = category;
 
 	this.x = 1;
 	this.y = 1;

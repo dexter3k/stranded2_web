@@ -10,26 +10,21 @@ function verticallyIntersectTriangle(x, z, v0, v1, v2) {
 	const h = vec3.cross(vec3.create(), d, e2);
 	const a = vec3.dot(e1, h);
 	const epsilon = 0.0000001;
-	if (a > -epsilon && a < epsilon) {
-		return null;
+	if (a <= -epsilon || a >= epsilon) {
+		const f = 1/a;
+		const s = vec3.subtract(vec3.create(), O, v0);
+		const u = f * vec3.dot(s, h);
+		if (u >= 0.0 && u <= 1.0) {
+			const q = vec3.cross(vec3.create(), s, e1);
+			const v = f * vec3.dot(d, q);
+			if (v >= 0.0 && u + v <= 1.0) {
+				const t = f * vec3.dot(e2, q);
+				return inf - t;
+			}
+		}
 	}
 
-	const f = 1/a;
-	const s = vec3.subtract(vec3.create(), O, v0);
-	const u = f * vec3.dot(s, h);
-	if (u < 0.0 || u > 1.0) {
-		return null;
-	}
-
-	const q = vec3.cross(vec3.create(), s, e1);
-	const v = f * vec3.dot(d, q);
-	if (v < 0.0 || u + v > 1.0) {
-		return null;
-	}
-
-
-	const t = f * vec3.dot(e2, q);
-	return O[1] + d[1] * t;
+	return null;
 }
 
 function Terrain(driver, data) {
@@ -46,44 +41,64 @@ function Terrain(driver, data) {
 			return null;
 		}
 		return this.points[x + z * (this.size + 1)];
-	}
+	};
 
 	this.getHeight = function(x, z) {
 		if (x < 0 || z < 0 || x >= this.size || z >= this.size) {
 			return 0;
 		}
+
 		const cellX = Math.floor(x);
 		const cellZ = Math.floor(z);
 		x -= cellX;
 		z -= cellZ;
+
 		if ((cellX&1) == (cellZ&1)) {
 			// [/] cell, /] part
-			let h = verticallyIntersectTriangle(x, z,
-				vec3.fromValues(0, this.getPoint(cellX+0, cellZ+0), 0),
-				vec3.fromValues(1, this.getPoint(cellX+1, cellZ+0), 0),
-				vec3.fromValues(1, this.getPoint(cellX+1, cellZ+1), 1));
-			if (h == null) {
-				// [/ part
-				h = verticallyIntersectTriangle(x, z,
-					vec3.fromValues(0, this.getPoint(cellX+0, cellZ+0), 0),
-					vec3.fromValues(0, this.getPoint(cellX+0, cellZ+1), 1),
-					vec3.fromValues(1, this.getPoint(cellX+1, cellZ+1), 1));
+			const v0y = this.getPoint(cellX+0, cellZ+0);
+			const v2y = this.getPoint(cellX+1, cellZ+1);
+
+			if (x >= z) {
+				const v1y = this.getPoint(cellX+1, cellZ+0);
+				return (
+					- x * v0y
+					+ x * v1y
+					- z * v1y
+					+ z * v2y
+					+ v0y);
+			} else {
+				const v1y = this.getPoint(cellX+0, cellZ+1);
+				return (
+					- x * v1y
+					+ x * v2y
+					- z * v0y
+					+ z * v1y
+					+ v0y);
 			}
-			return h;
 		} else {
 			// [\] cell, \] part
-			let h = verticallyIntersectTriangle(x, z,
-				vec3.fromValues(0, this.getPoint(cellX+0, cellZ+1), 1),
-				vec3.fromValues(1, this.getPoint(cellX+1, cellZ+0), 0),
-				vec3.fromValues(1, this.getPoint(cellX+1, cellZ+1), 1));
-			if (h == null) {
-				// [/ part
-				h = verticallyIntersectTriangle(x, z,
-					vec3.fromValues(0, this.getPoint(cellX+0, cellZ+1), 1),
-					vec3.fromValues(0, this.getPoint(cellX+0, cellZ+0), 0),
-					vec3.fromValues(1, this.getPoint(cellX+1, cellZ+0), 0));
+			const v0y = this.getPoint(cellX+0, cellZ+1);
+			const v1y = this.getPoint(cellX+1, cellZ+0);
+
+			if (x + z >= 1.0) {
+				const v2y = this.getPoint(cellX+1, cellZ+1);
+				return (
+					- x * v0y
+					+ x * v2y
+					- z * v1y
+					+ z * v2y
+					+ v1y
+					- v2y
+					+ v0y);
+			} else {
+				const v2y = this.getPoint(cellX+0, cellZ+0);
+				return (
+					+ x * v1y
+					- x * v2y
+					+ z * v0y
+					- z * v2y
+					+ v2y);
 			}
-			return h;
 		}
 	}
 

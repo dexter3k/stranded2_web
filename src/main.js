@@ -99,6 +99,8 @@ async function main() {
 
     // Loading units
     gui.bmpf.loadingScreen(gui.strings.base[4], 60.0);
+    const unitTypes = new Units();
+    await unitTypes.load(driver, gui);
 
     // Loading items
     gui.bmpf.loadingScreen(gui.strings.base[5], 80.0);
@@ -106,7 +108,7 @@ async function main() {
     // Loading infos
     gui.bmpf.loadingScreen(gui.strings.base[6], 98.0);
 
-    const world = new World(scene, obj);
+    const world = new World(scene, obj, unitTypes);
 
     await startMenu();
 
@@ -132,13 +134,21 @@ async function main() {
         if (d) { mot[1] += 1.0; }
         vec2.normalize(mot, mot);
         cam.move(mot[0], mot[1], deltaTime);
+        let terrainTop = world.getTerrainHeight(cam.pos[0], cam.pos[2]);
+        if (terrainTop < -350) {
+            terrainTop = -350;
+        }
+        // cam.pos[1] = terrainTop + 20;
 
         driver.clearScene();
         world.render(0.0);
 
-        gui.bmpf.centeredText(400, 20, Math.round(1000.0 / avgDelta) + " FPS", 0);
-        gui.bmpf.centeredText(400, 40, Math.floor(cam.pos[0])+","+Math.floor(cam.pos[1])+","+Math.floor(cam.pos[2]), 0);
-        gui.bmpf.centeredText(200, 20, ""+world.getTerrainHeight(cam.pos[0], cam.pos[2]), 0);
+        gui.bmpf.centeredText(400, 20,
+            Math.round(1000.0 / avgDelta) + " FPS", 0);
+        gui.bmpf.centeredText(400, 40,
+            Math.floor(cam.pos[0])+","+Math.floor(cam.pos[1])+","+Math.floor(cam.pos[2]), 0);
+        gui.bmpf.centeredText(200, 20,
+            ""+Math.floor(world.getTerrainHeight(cam.pos[0], cam.pos[2])), 0);
         gui.bmpf.centeredText(200, 40, ""+(cam.pos[0]/64+16), 0);
         window.requestAnimationFrame(anim);
     };
