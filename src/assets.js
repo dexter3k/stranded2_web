@@ -4,7 +4,6 @@ async function loadBinaryAsset(source) {
         request.open("GET", source, true);
         request.responseType = "arraybuffer";
         request.onload = function() {
-            console.log("Loaded binary asset " + source);
             resolve(request.response);
         };
         request.send();
@@ -17,7 +16,6 @@ async function loadTextAsset(source) {
         request.open("GET", source, true);
         request.responseType = "text";
         request.onload = function() {
-            console.log("Loaded text asset " + source);
             resolve(request.response);
         };
         request.send();

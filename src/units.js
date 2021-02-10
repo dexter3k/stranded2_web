@@ -142,9 +142,12 @@ function Units() {
 			const source = await loadTextAsset("assets/Stranded II/" + files[i]);
 			this.parse(source);
 		}
+		let work = [];
 		for (let i = 0; i < this.ids.length; i++) {
-			gui.bmpf.loadingScreen(gui.strings.base[4], Math.round(65 + 15 * i / this.ids.length));
-			await this[this.ids[i]].preloadMedia(driver);
+			work.push(this[this.ids[i]].preloadMedia(driver));
 		}
+		await doAllWithCounter(work, function(done) {
+			gui.bmpf.loadingScreen(gui.strings.base[4], Math.round(65 + 15 * done / work.length));
+		});
 	};
 }

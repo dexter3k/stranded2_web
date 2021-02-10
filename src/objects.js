@@ -150,9 +150,12 @@ function Objects() {
 			const source = await loadTextAsset("assets/Stranded II/" + files[i]);
 			this.parse(source);
 		}
+		let work = [];
 		for (let i = 0; i < this.ids.length; i++) {
-			gui.bmpf.loadingScreen(gui.strings.base[3], Math.round(25 + 35 * i / this.ids.length));
-			await this[this.ids[i]].preloadMedia(driver);
+			work.push(this[this.ids[i]].preloadMedia(driver));
 		}
+		await doAllWithCounter(work, function(done) {
+			gui.bmpf.loadingScreen(gui.strings.base[3], Math.round(25 + 35 * done / work.length));
+		});
 	};
 }
