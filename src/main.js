@@ -50,6 +50,7 @@ async function main() {
             cam.pitch += dy * 0.5;
         }
     };
+
     let w = false;
     let s = false;
     let a = false;

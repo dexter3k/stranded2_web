@@ -52,6 +52,12 @@ class SpecialToken {
 	}
 }
 
+class UnknownToken {
+	constructor(data) {
+		this.data = data;
+	}
+}
+
 class Tokenizer {
 	constructor(source) {
 		this.source = source;
@@ -65,8 +71,13 @@ class Tokenizer {
 			if (c == " " || c == "\n" || c == "\r" || c == "\t" || c == "¦") {
 				continue;
 			}
+			if (c == "/" && this.lookahead == "/") {
+				while (this.lookahead != null && this.lookahead != "\n") {
+					this.nextCharacter();
+				}
+				continue;
+			}
 			if (isAlpha(c)) {
-				// parse identifier
 				let token = "" + c;
 				while (isAlphanumeric(this.lookahead)) {
 					token = token + this.nextCharacter();
@@ -91,7 +102,7 @@ class Tokenizer {
 				this.nextCharacter();
 				return new StringToken(token);
 			}
-			console.log(c);
+			return new UnknownToken(c);
 		}
 		return null;
 	}
