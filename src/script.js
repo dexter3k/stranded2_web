@@ -140,13 +140,47 @@ class ScriptCompiler {
 				break;
 			}
 
-			console.log("Next event: " + eventName);
-			// const event = this.parseEvent(eventName);
+			const event = this.parseEvent(eventName);
+			if (event == null) {
+				break;
+			}
+			this.script.addEvent(eventName, event);
 		}
 		for (let i = 0; i < this.errors.length; i++) {
 			console.log("Parsing error: " + this.errors[i]);
 		}
 		return this.script;
+	}
+
+	parseEvent(name) {
+		if (!this.expectSpecial("{")) {
+			return null;
+		}
+
+		// For now code is a list of tokens, later I'll do something about it
+		let code = [];
+		let depth = 1;
+		while (depth > 0) {
+			const token = this.nextToken();
+			if (token == null) {
+				this.errors.push("Unexpected EOF in the Event \"" +name + "\"");
+				break;
+			}
+
+			if (token instanceof SpecialToken) {
+				if (token.data == "{") {
+					depth++;
+					continue;
+				} else if (token.data == "}") {
+					depth--;
+					continue;
+				}
+			}
+
+			code.push(token);
+		}
+
+		return depth == 0 ? code : null;
 	}
 
 	nextToken() {
@@ -224,5 +258,6 @@ class Script {
 
 	addEvent(name, code) {
 		this.events.push(new ScriptEvent(name, code));
+		console.log("Added event \"" + name + "\" to script, " + code.length + " tokens total");
 	}
 }

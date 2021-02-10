@@ -22,5 +22,9 @@ function Object(id, category) {
 					removeFilenameFromPath("assets/Stranded II/" + this.model) + this.visual.textures[i].path);
 			}
 		}
+
+		if (this.script != null) {
+			this.script = CompileScript(this.script);
+		}
 	};
 }

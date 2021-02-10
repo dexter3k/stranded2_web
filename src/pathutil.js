@@ -6,3 +6,7 @@ function removeFilenameFromPath(str) {
 	}
 	return str.substring(0, sepb) + "/";
 }
+
+function normalizePath(str) {
+	return str.replace("\\", "/");
+}

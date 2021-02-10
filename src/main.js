@@ -68,6 +68,17 @@ async function main() {
         if (e.code == "KeyD") { d = false; }
     };
 
+    // Choose mod folder and setup filesystem of some kind
+    const data = new Gamedata("Stranded II");
+
+    // Load settings here..
+    // sys\controls.cfg
+    // sys\scriptcontrols.cfg
+    // sys\settings.cfg
+
+    // Settings in the mod can be probably ignored for the most part
+    // and we should store our own settings in the browser storage?
+
     const driver = new Driver(gl, gl.drawingBufferWidth, gl.drawingBufferHeight, cam);
     const gui = new Gui(driver);
     const scene = new Scene(gui, driver);
@@ -84,13 +95,25 @@ async function main() {
 
     // Loading materials
     gui.bmpf.loadingScreen("Loading Materials", 18.0);
+    // does not really load anything :)
 
     // Loading stuff
     gui.bmpf.loadingScreen(gui.strings.base[2], 19.0);
+    // Keynames, possibly not even needed, I'm not sure
     // load sys/keys.inf
+
+    // States, icons, sheet index, id, name
     // load sys/states.inf
+
+    // Set of RGB vales for each time hour
     // load sys/lightcycle.inf
+
+    // Main game configuration
     // load sys/game*.inf
+    await data.loadGame();
+
+    // List of class=group,Name datas
+    // to specify which groups belong to which class
     // load sys/groups.inf
 
     // Loading objects
