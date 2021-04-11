@@ -192,8 +192,7 @@ async function main() {
         // Spawn at specified or random SpawnInfo
         // If no suited SpawnInfo, spawn at the center
         let spawnPoints = [];
-        for (let index in world.infos) {
-            const info = world.infos[index];
+        for (const info of world.infos.values()) {
             if (info.type == 1) {
                 spawnPoints.push(info);
             }

@@ -3,32 +3,33 @@ async function loadMap(path, world, gui) {
 
     // Loading map
     gui.bmpf.loadingScreen(gui.strings.base[21], 1.0);
-    data = await loadBinaryAsset("assets/Stranded II/" + path);
+    data = await loadBinaryAsset(world.gameData.modPath + path);
     const stream = new BinaryStream(data);
-    // console.log(stream);
 
     // Loading map
     gui.bmpf.loadingScreen(gui.strings.base[21], 10.0);
 
-    let mapHeader = {};
-    mapHeader.comment = stream.readLine();
-    if (mapHeader.comment.substr(0, 15) !== "### Stranded II") {
+    const comment = stream.readLine();
+    if (comment.substr(0, 15) !== "### Stranded II") {
         console.log("Unknown map header: " + comment);
         // Should crash but let's continue at least for now
     }
-    mapHeader.version = stream.readLine();
-    mapHeader.date = stream.readLine();
-    mapHeader.time = stream.readLine();
-    mapHeader.format = stream.readLine();
-    mapHeader.mode = stream.readLine();
-    mapHeader.typeFormat = stream.readLine();
 
-    const longObjects = false;
-    const longUnits   = false;
-    const longItems   = false;
+    const header = {
+        comment:    comment,
+        version:    stream.readLine(),
+        date:       stream.readLine(),
+        time:       stream.readLine(),
+        format:     stream.readLine(),
+        mode:       stream.readLine(),
+        typeFormat: stream.readLine(),
+    };
+    world.startMapLoading(header);
 
-    console.log(mapHeader);
-    if (mapHeader.typeFormat != "") {
+    let longObjects = false;
+    let longUnits   = false;
+    let longItems   = false;
+    if (header.typeFormat != "") {
         console.log("TODO: typeFormat")
     }
 
@@ -40,34 +41,31 @@ async function loadMap(path, world, gui) {
     // Map preview image, skip when loading map
     stream.skipBytes(96 * 72 * 3);
 
-    let passHeader = {};
-    passHeader.salt = stream.readByte();
-    passHeader.password = stream.readLine();
+    const pass = {
+        salt:     stream.readByte(),
+        password: stream.readLine(),
+    };
 
-    let mapVars = {};
-    mapVars.day = stream.readInt();
-    mapVars.hour = stream.readByte();
-    mapVars.minute = stream.readByte();
-    mapVars.freezeTime = stream.readByte() !== 0 ? true : false;
-    mapVars.skybox = stream.readString();
-    mapVars.multiplayer = stream.readByte() !== 0 ? true : false;
-    mapVars.climate = stream.readByte();
-    mapVars.music = stream.readString();
-    mapVars.script = stream.readString();
-    mapVars.fog = [];
-    mapVars.fog[0] = stream.readByte();
-    mapVars.fog[1] = stream.readByte();
-    mapVars.fog[2] = stream.readByte();
-    mapVars.fog[3] = stream.readByte();
-
-    console.log(mapVars);
+    const vars = {
+        day:         stream.readInt(),
+        hour:        stream.readByte(),
+        minute:      stream.readByte(),
+        freezeTime:  stream.readBool(),
+        skybox:      stream.readString(),
+        multiplayer: stream.readBool(),
+        climate:     stream.readByte(),
+        music:       stream.readString(),
+        script:      CompileScript(stream.readString()),
+        fog:         [stream.readByte(), stream.readByte(), stream.readByte(), stream.readByte()],
+    };
+    console.log(vars);
 
     // Future extension
     stream.skipBytes(1);
 
     // Quick slot key mapping
-    let quickslots = [];
-    for (let i = 0; i <= 9; i++) {
+    const quickslots = Array(10);
+    for (let i = 0; i < 10; i++) {
         quickslots[i] = stream.readString();
     }
     console.log(quickslots);
@@ -75,8 +73,10 @@ async function loadMap(path, world, gui) {
     // Loading colormap
     gui.bmpf.loadingScreen(gui.strings.base[22], 20.0);
 
-    let colormap = {};
-    colormap.size = stream.readInt();
+    const colormap = {
+        size: stream.readInt(),
+        data: null,
+    };
     colormap.data = new Array(colormap.size * colormap.size * 4);
     for (let x = 0; x < colormap.size; x++) {
         for (let z = 0; z < colormap.size; z++) {
@@ -87,32 +87,31 @@ async function loadMap(path, world, gui) {
             colormap.data[baseIndex + 3] = 0xff;
         }
     }
-    // console.log("Colormap:");
-    // console.log(colormap);
 
     // Loading heightmap
     gui.bmpf.loadingScreen(gui.strings.base[23], 30.0);
 
-    let terrain = {};
-    // Size is in cells x/y, not actual height points
-    terrain.size = stream.readInt();
-    terrain.data = [];
+    const terrain = {
+        size: stream.readInt(),
+        data: null,
+    };
     if (terrain.size < 0) {
         terrain.size = 32;
     }
+    terrain.data = new Array((terrain.size + 1) * (terrain.size + 1));
     for (let x = 0; x <= terrain.size; x++) {
         for (let y = 0; y <= terrain.size; y++) {
             terrain.data[(terrain.size+1) * y + x] = stream.readFloat();
         }
     }
-    // console.log(terrain);
 
     // Loading grassmap
     gui.bmpf.loadingScreen(gui.strings.base[24], 35.0);
 
-    let grassmap = {};
-    grassmap.size = colormap.size;
-    grassmap.data = [];
+    const grassmap = {
+        size: colormap.size,
+        data: new Array((colormap.size + 1) * (colormap.size + 1)),
+    };
     for (let x = 0; x <= grassmap.size; x++) {
         for (let y = 0; y <= grassmap.size; y++) {
             grassmap.data[(grassmap.size+1) * y + x] = stream.readBool(); // Bool, presence
@@ -120,13 +119,12 @@ async function loadMap(path, world, gui) {
     }
 
     // We have parsed all basic world visuals which we can now render.
-    console.log(terrain);
     const terrainInfo = {
         heightmap: terrain,
         colormap: colormap,
         grassmap: grassmap,
     };
-    world.init(mapVars, terrainInfo);
+    world.preinitMapDuringLoading(vars, terrainInfo);
 
     // Now populate our world with units, buildings, trees and info points
 
@@ -195,13 +193,6 @@ async function loadMap(path, world, gui) {
     }
 
     // Loading infos
-    // id int32
-    // - unique identifier on this map
-    // type int8
-    // - 
-    // x, y, z float32
-    // pitch, yaw float32
-    // data string
     gui.bmpf.loadingScreen(gui.strings.base[28], 90.0);
     const infoCount = stream.readInt();
     console.log("Loading "+infoCount+" infos..");
@@ -217,7 +208,6 @@ async function loadMap(path, world, gui) {
             data:  stream.readString(),
         };
         world.placeInfo(info);
-        // console.log(info);
     }
 
     // Loading states
@@ -240,7 +230,6 @@ async function loadMap(path, world, gui) {
             string: stream.readString(),
         };
         world.placeState(state);
-        // console.log(state);
     }
 
     // Loading extensions
@@ -257,40 +246,29 @@ async function loadMap(path, world, gui) {
             value: stream.readString(),
             stuff: stream.readString(),
         };
-        // console.log(ext);
+        world.addExtension(ext);
     }
 
-    if (mapHeader.mode == "sav") {
+    if (header.mode == "sav") {
         const pitch = stream.readFloat();
         const yaw = stream.readFloat();
+        world.setPlayerRotation(pitch, yaw);
     }
 
+    // skip empty lines..
     for (let i = 0; i < 2; i++) {
         stream.readLine();
     }
+
     const mapNote = stream.readLine();
     if (mapNote != "www.unrealsoftware.de") {
         console.log("Unknown map note, map is possibly damaged: " + mapNote);
-    } else if (mapHeader.mode == "map") {
-        // attachments!
+    } else if (header.mode == "map") {
+        // TODO: attachments!
         if (stream.remaining() > 0) {
             console.log(stream.remaining() + " bytes left for attachments!");
         }
     }
 
-    // load ambient sound file..
-
-    // Setup environment
-    gui.bmpf.loadingScreen(gui.strings.base[31], 97.0);
-
-    // Spawn player at SP map
-    gui.bmpf.loadingScreen(gui.strings.base[32], 100.0);
-
-    if (mapHeader.mode == "map") {
-        // on:start event
-    }
-
-    // on:load event
-
-    // and we're done :)
+    world.finishMapLoading();
 }
