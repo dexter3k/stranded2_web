@@ -1,15 +1,32 @@
-class ObjectInfo {
+class Strings {
 	constructor() {
+		this.base = new Array(64);
+		this.menu = new Array(256);
+		this.editor = new Array(320);
+
+		for (let i = 0; i < this.base.length; i++) {
+			this.base[i] = `<missing base str ${i}>`;
+		}
+		for (let i = 0; i < this.menu.length; i++) {
+			this.menu[i] = `<missing menu str ${i}>`;
+		}
+		for (let i = 0; i < this.editor.length; i++) {
+			this.editor[i] = `<missing editor str ${i}>`;
+		}
+	}
+
+	static format(str, v1="", v2="", v3="") {
+		return str.replace(/\$1/, v1).replace(/\$2/, v2).replace(/\$3/, v3);
 	}
 }
 
-class UnitInfo {
-	constructor() {
-	}
-}
-
-class ItemInfo {
-	constructor() {
+class MaterialInfo {
+	constructor(id, name, swim, noFire, hardness) {
+		this.id = id;
+		this.name = name;
+		this.swim = swim;
+		this.noFire = noFire;
+		this.hardness = hardness;
 	}
 }
 
@@ -51,10 +68,9 @@ class StateInfo {
 	constructor(id) {
 		this.id = id;
 		this.name = `<state ${id}>`;
-		this.icon = "sys/gfx/states.bmp";
-		this.frame = 29; // 0-29, inclusive
+		this.frame = 0;
+		this.icon = 0;
 		this.script = null;
-		this.description = "";
 	}
 }
 
@@ -131,14 +147,117 @@ class GameInfo {
 	}
 }
 
+// Const Cclass_global=0,Cclass_world=0		;Global/World
+// Const Cclass_object=1						;Object Class ID
+// Const Cclass_unit=2							;Unit Class ID
+// Const Cclass_item=3							;Item Class ID
+// Const Cclass_info=4							;Info Class ID
+// Const Cclass_state=5						;State Class ID
+// Const Cclass_building=150					;Building Class (for Groups)
+
 class GroupInfo {
-	constructor(type, id, name) {
-		this.type = type;
-		this.id = id;
+	// GroupInfo(class, "tree", "Tree");
+	constructor(klass, group, name) {
+		this.type = klass;
+		this.group = group;
 		this.name = name;
 		if (name == "") {
-			this.name = id;
+			this.name = group;
 		}
+	}
+}
+
+// Includes objects, units and items!
+class ObjectInfo {
+	constructor(id) {
+		this.id = id;
+		this.name = `<object ${id}>`;
+		this.description = this.name;
+
+		this.iconPath = null;
+		this.iconHandle = 0;
+		this.modelPath = null;
+		this.modelHandle = null;
+
+		this.scale = [1.0, 1.0, 1.0];
+		this.color = [255, 255, 255];
+		this.alpha = 1.0;
+		this.shine = 1.0;
+
+		this.autofade = 500;
+		this.swaySpeed = 0.0;
+		this.swayPower = 1.0;
+		this.health = 500.0;
+		this.healthChange = 0.0;
+		this.col = 1; // ?
+		this.searchRatio = 30.0; // ?
+		this.maxWeight = 100 * 1000;
+		this.ined = 1; // ?
+		this.growTime = 10; // ?
+		this.fx = null;
+		this.mat = null;
+		this.state = null;
+		this.behaviour = null;
+		this.script = null;
+		this.inEditor = false;
+		this.group = null;
+		this.detailtex = null;
+	}
+
+	async preloadMedia(driver) {
+		if (this.modelPath == null) {
+			if (this.model != null) {
+				this.modelPath = this.model;
+			} else {
+				console.log("Object has null model path");
+				return ; // nothing to do here..
+			}
+		}
+
+		const m = new Model(this.modelPath, driver);
+		this.modelHandle = m;
+		await m.load();
+
+		if (m.textures != null) {
+			for (let i = 0; i < m.textures.length; i++) {
+				const texturePath = removeFilenameFromPath("assets/Stranded II/" + this.modelPath) + m.textures[i].path;
+				m.textures[i].id = await loadTexture(driver.gl, texturePath);
+			}
+		}
+	}
+}
+
+// sigh.. sorry.
+class InfoInfo {
+	constructor(id) {
+		this.id = id;
+		this.name = `<info ${id}>`;
+		this.group = "stuff";
+		this.frame = 0;
+		this.description = this.name;
+	}
+}
+
+class CombinationInfo {
+	constructor() {
+		this.id = "";
+		this.script = null;
+		this.gen = new Array();
+		this.req = new Array();
+		this.genname = "";
+	}
+}
+
+class BuildingInfo {
+	constructor(id) {
+		this.id = id;
+		this.group = -1;
+		this.object = -1;
+		this.unit = -1;
+		this.req = new Map();
+		this.script = null;
+		this.buildSpace = "default";
+		this.atObject = new Array();
 	}
 }
 
@@ -147,14 +266,221 @@ class Gamedata {
 		this.mod = mod;
 		this.modPath = "assets/" + mod + "/";
 
+		this.strings = new Strings();
+
+		this.materials = new Array();
+		this.materialByName = new Map();
+
+		this.states = new Map();
+
+		this.lightCycle = new Array(24);
+
 		this.game = new GameInfo();
-		this.groups = {};
-		this.states = [];
+
+		this.groups = new Array();
+
+		// These are id->value maps, where ids are integers
+		// but since those are not sequential we cannot use
+		// basic arrays, hope maps are ok
+		this.objects = new Map();
+		this.units = new Map();
+		this.items = new Map();
+		this.infos = new Map();
+
+		this.combinations = new Array();
+		this.buildings = new Map();
+	}
+
+	async loadStrings() {
+		const files = [
+			"sys/strings.inf",
+		];
+		for (const path of files) {
+			const source = await loadTextAsset(this.modPath + path);
+			parseStringsConfig(this.strings, source);
+		}
+	}
+
+	async loadMaterials(driver, gui) {
+		this.materials.push(new MaterialInfo( 0,  "none", 0, 0, 1));
+		this.materials.push(new MaterialInfo( 1,  "wood", 1, 0, 1));
+		this.materials.push(new MaterialInfo( 2, "stone", 0, 1, 2));
+		this.materials.push(new MaterialInfo( 3,  "dirt", 0, 1, 1));
+		this.materials.push(new MaterialInfo( 4,  "dust", 0, 1, 1));
+		this.materials.push(new MaterialInfo( 5,  "leaf", 1, 0, 0));
+		this.materials.push(new MaterialInfo( 6, "metal", 0, 1, 2));
+		this.materials.push(new MaterialInfo( 7, "flesh", 0, 0, 1));
+		this.materials.push(new MaterialInfo( 8, "water", 0, 1, 0));
+		this.materials.push(new MaterialInfo( 9,  "lava", 0, 0, 0));
+		this.materials.push(new MaterialInfo(10, "fruit", 0, 0, 1));
+		this.materials.push(new MaterialInfo(11, "glass", 0, 1, 2));
+
+		for (const mat of this.materials) {
+			this.materialByName.set(mat.name, mat);
+		}
+
+		console.log(this.materials);
+	}
+
+	async loadStates(driver, gui) {
+		const files = [
+			"sys/states.inf",
+		];
+		for (const path of files) {
+			const source = await loadTextAsset(this.modPath + path);
+			parseStatesConfig(this.states, source);
+		}
+		console.log(this.states);
+	}
+
+	async loadLightCycle(driver, gui) {
+		const files = [
+			"sys/lightcycle.inf",
+		];
+		for (const path of files) {
+			const source = await loadTextAsset(this.modPath + path);
+			parseLightCycleConfig(this.lightCycle, source);
+		}
+		console.log(this.lightCycle);
 	}
 
 	async loadGame() {
-		const source = await loadTextAsset(this.modPath + "sys/game.inf");
-		parseGameConfig(this.game, source);
+		const files = [
+			"sys/game.inf",
+		];
+		for (const path of files) {
+			const source = await loadTextAsset(this.modPath + path);
+			parseGameConfig(this.game, source);
+		}
 		console.log(this.game);
+	}
+
+	async loadGroups(driver, gui) {
+		const files = [
+			"sys/groups.inf",
+		];
+		for (const path of files) {
+			const source = await loadTextAsset(this.modPath + path);
+			parseGroupsConfig(this.groups, source);
+		}
+		console.log(this.groups);
+	}
+
+	async loadObjects(driver, gui) {
+		// Parsing actual object inf does not take much time
+		// What takes time is loading models and textures for these
+		// objects, so we only show loading screen for that!
+
+		// TODO: somehow determine what object configs we have on remote!
+		const files = [
+			"sys/objects.inf",
+			"sys/objects_buildings.inf",
+			"sys/objects_bushes.inf",
+			"sys/objects_flowers.inf",
+			"sys/objects_gras.inf",
+			"sys/objects_palms.inf",
+			"sys/objects_stone.inf",
+			"sys/objects_stuff.inf",
+			"sys/objects_trees.inf",
+		];
+		for (const path of files) {
+			const source = await loadTextAsset(this.modPath + path);
+			parseObjectsConfig(this.objects, source);
+		}
+
+		// Load media while updating loading screen..
+		let work = [];
+		for (const object of this.objects.values()) {
+			work.push(object.preloadMedia(driver));
+		}
+		await doAllWithCounter(work, function(done) {
+			gui.bmpf.loadingScreen(gui.strings.base[3], Math.round(25 + 35 * done / work.length));
+		});
+	}
+
+	async loadUnits(driver, gui) {
+		const files = [
+			"sys/units.inf",
+		];
+		for (const path of files) {
+			const source = await loadTextAsset(this.modPath + path);
+			parseUnitsConfig(this.units, source);
+		}
+
+		// Load media while updating loading screen..
+		let work = [];
+		for (let unit of this.units.values()) {
+			work.push(unit.preloadMedia(driver));
+		}
+		await doAllWithCounter(work, function(done) {
+			gui.bmpf.loadingScreen(gui.strings.base[4], Math.round(65 + 15 * done / work.length));
+		});
+	}
+
+	async loadItems(driver, gui) {
+		const files = [
+			"sys/items.inf",
+			"sys/items_edible.inf",
+			"sys/items_material.inf",
+			"sys/items_stuff.inf",
+			"sys/items_tools.inf",
+			"sys/items_weapons.inf",
+		];
+		for (const path of files) {
+			const source = await loadTextAsset(this.modPath + path);
+			parseItemsConfig(this.items, source);
+		}
+
+		// Load media while updating loading screen..
+		let work = [];
+		for (let item of this.items.values()) {
+			work.push(item.preloadMedia(driver));
+		}
+		await doAllWithCounter(work, function(done) {
+			gui.bmpf.loadingScreen(gui.strings.base[5], Math.round(80 + 18 * done / work.length));
+		});
+
+		console.log(this.items);
+	}
+
+	async loadInfos(driver, gui) {
+		const files = [
+			"sys/infos.inf",
+		];
+		for (const path of files) {
+			const source = await loadTextAsset(this.modPath + path);
+			parseInfosConfig(this.infos, source);
+		}
+
+		console.log(this.infos);
+	}
+
+	async loadCombinations(driver, gui) {
+		const files = [
+			"sys/combinations.inf",
+			"sys/combinations_actions.inf",
+			"sys/combinations_ammo.inf",
+			"sys/combinations_basic.inf",
+			"sys/combinations_potions.inf",
+			"sys/combinations_stuff.inf",
+			"sys/combinations_tools.inf",
+			"sys/combinations_weapons.inf",
+		];
+		for (const path of files) {
+			const source = await loadTextAsset(this.modPath + path);
+			parseCombinationsConfig(this.combinations, source);
+		}
+		console.log(this.combinations);
+	}
+
+	async loadBuildings(driver, gui) {
+		const files = [
+			"sys/buildings.inf",
+		];
+		for (const path of files) {
+			const source = await loadTextAsset(this.modPath + path);
+			parseBuildingsConfig(this.buildings, source);
+		}
+		console.log(this.buildings);
 	}
 }

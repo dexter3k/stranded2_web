@@ -40,6 +40,7 @@ async function main() {
     cam.pos[2] = +391;
     cam.yaw    = 142;
     cam.pitch  = -3;
+
     canvas.onmousemove = (e) => {
         if (dragging) {
             const dx = e.offsetX - lastX;
@@ -77,8 +78,10 @@ async function main() {
     // sys\settings.cfg
 
     // Settings in the mod can be probably ignored for the most part
-    // and we should store our own settings in the browser storage?
+    // as we should store our own settings in the browser storage?
 
+    // Setup graphics as soon as possible to display loading info earlier
+    // Original game does window and font setup only after loading strings
     const driver = new Driver(gl, gl.drawingBufferWidth, gl.drawingBufferHeight, cam);
     const gui = new Gui(driver);
     const scene = new Scene(gui, driver);
@@ -86,7 +89,8 @@ async function main() {
 
     // Loading strings
     gui.bmpf.loadingScreen("Loading Translations", 0.0);
-    await gui.loadStrings();
+    await data.loadStrings();
+    gui.strings = data.strings;
 
     // Loading interface
     gui.bmpf.loadingScreen(gui.strings.base[1], 6.0);
@@ -96,6 +100,8 @@ async function main() {
     // Loading materials
     gui.bmpf.loadingScreen("Loading Materials", 18.0);
     // does not really load anything :)
+    // but we might add one later?
+    await data.loadMaterials(driver, gui);
 
     // Loading stuff
     gui.bmpf.loadingScreen(gui.strings.base[2], 19.0);
@@ -103,38 +109,42 @@ async function main() {
     // load sys/keys.inf
 
     // States, icons, sheet index, id, name
-    // load sys/states.inf
+    await data.loadStates(driver, gui);
 
     // Set of RGB vales for each time hour
-    // load sys/lightcycle.inf
+    await data.loadLightCycle(driver, gui);
 
     // Main game configuration
-    // load sys/game*.inf
     await data.loadGame();
 
     // List of class=group,Name datas
     // to specify which groups belong to which class
-    // load sys/groups.inf
+    await data.loadGroups(driver, gui);
 
     // Loading objects
     gui.bmpf.loadingScreen(gui.strings.base[3], 20.0);
-    const obj = new Objects();
-    await obj.load(driver, gui);
+    await data.loadObjects(driver, gui);
 
     // Loading units
     gui.bmpf.loadingScreen(gui.strings.base[4], 60.0);
-    const unitTypes = new Units();
-    await unitTypes.load(driver, gui);
+    await data.loadUnits(driver, gui);
 
     // Loading items
     gui.bmpf.loadingScreen(gui.strings.base[5], 80.0);
+    await data.loadItems(driver, gui);
 
     // Loading infos
     gui.bmpf.loadingScreen(gui.strings.base[6], 98.0);
+    await data.loadInfos(driver, gui);
 
-    const world = new World(scene, obj, unitTypes);
+    await data.loadCombinations(driver, gui);
+    await data.loadBuildings(driver, gui);
+
+    const world = new World(scene, data);
 
     await startMenu();
+    // await loadMap("maps/adventure/map01.s2", world, gui);
+    // spawnPlayer();
 
     // Logic update and rendering should go in a single run,
     // so key and mouse events won't interfere in process (prevent data races)
@@ -151,29 +161,28 @@ async function main() {
         avgDelta = avgDelta * 0.9 + deltaTime * 0.1;
         start = t;
 
+        // Prepare crude motion vector..
         let mot = vec2.create();
         if (w) { mot[0] += 1.0; }
         if (s) { mot[0] -= 1.0; }
         if (a) { mot[1] -= 1.0; }
         if (d) { mot[1] += 1.0; }
         vec2.normalize(mot, mot);
+
         cam.move(mot[0], mot[1], deltaTime);
-        let terrainTop = world.getTerrainHeight(cam.pos[0], cam.pos[2]);
-        if (terrainTop < -350) {
-            terrainTop = -350;
-        }
-        // cam.pos[1] = terrainTop + 20;
+
+        world.update(deltaTime);
 
         driver.clearScene();
-        world.render(0.0);
+        world.render(deltaTime);
 
+        // Draw current FPS
         gui.bmpf.centeredText(400, 20,
             Math.round(1000.0 / avgDelta) + " FPS", 0);
+        // Draw current position
         gui.bmpf.centeredText(400, 40,
             Math.floor(cam.pos[0])+","+Math.floor(cam.pos[1])+","+Math.floor(cam.pos[2]), 0);
-        gui.bmpf.centeredText(200, 20,
-            ""+Math.floor(world.getTerrainHeight(cam.pos[0], cam.pos[2])), 0);
-        gui.bmpf.centeredText(200, 40, ""+(cam.pos[0]/64+16), 0);
+
         window.requestAnimationFrame(anim);
     };
 
@@ -182,10 +191,33 @@ async function main() {
     function spawnPlayer() {
         // Spawn at specified or random SpawnInfo
         // If no suited SpawnInfo, spawn at the center
+        let spawnPoints = [];
+        for (let index in world.infos) {
+            const info = world.infos[index];
+            if (info.type == 1) {
+                spawnPoints.push(info);
+            }
+        }
+
+        if (spawnPoints.length == 0) {
+            console.log("Now spawn points provided in the map file. Spawning at the map center!");
+            spawnPoints.push({x: 0, z: 0, yaw: 0, pitch: 0, y: world.getTerrainHeight(0, 0)});
+        }
+
+        // Note: the original game does this differently, it loops over all possible spawn points
+        // and chooses one with 1/10 probability. This results in higher picking probability for
+        // those points at the start of the list
+        const point = spawnPoints[Math.floor(Math.random() * spawnPoints.length)];
+        cam.pos[0] = point.x;
+        cam.pos[1] = point.y + 16 + 18;
+        cam.pos[2] = point.z;
+        cam.yaw = point.yaw;
+        cam.pitch = point.pitch;
     }
 
     async function startMenu() {
         await loadMap("maps/menu/menu.s2", world, gui);
+
         spawnPlayer();
     }
 }

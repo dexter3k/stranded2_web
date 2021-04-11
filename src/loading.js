@@ -1,4 +1,6 @@
 async function loadMap(path, world, gui) {
+    world.clearBeforeNewMap();
+
     // Loading map
     gui.bmpf.loadingScreen(gui.strings.base[21], 1.0);
     data = await loadBinaryAsset("assets/Stranded II/" + path);
@@ -193,6 +195,13 @@ async function loadMap(path, world, gui) {
     }
 
     // Loading infos
+    // id int32
+    // - unique identifier on this map
+    // type int8
+    // - 
+    // x, y, z float32
+    // pitch, yaw float32
+    // data string
     gui.bmpf.loadingScreen(gui.strings.base[28], 90.0);
     const infoCount = stream.readInt();
     console.log("Loading "+infoCount+" infos..");
@@ -208,6 +217,7 @@ async function loadMap(path, world, gui) {
             data:  stream.readString(),
         };
         world.placeInfo(info);
+        // console.log(info);
     }
 
     // Loading states
@@ -230,6 +240,7 @@ async function loadMap(path, world, gui) {
             string: stream.readString(),
         };
         world.placeState(state);
+        // console.log(state);
     }
 
     // Loading extensions
@@ -263,7 +274,7 @@ async function loadMap(path, world, gui) {
     } else if (mapHeader.mode == "map") {
         // attachments!
         if (stream.remaining() > 0) {
-            console.log(stream.remaining() + " bytes left!");
+            console.log(stream.remaining() + " bytes left for attachments!");
         }
     }
 

@@ -1,17 +1,13 @@
 function Gui(driver) {
     this.driver = driver;
     this.bmpf = new Bmpf(driver);
-    this.strings = new Strings();
+    this.strings = null;
 
     // map[textureName]glTexture
     var textures = {};
 
     this.loadFonts = async function() {
         await this.bmpf.load();
-    };
-
-    this.loadStrings = async function() {
-        await this.strings.load();
     };
 
     this.preloadMedia = async function() {

@@ -77,9 +77,9 @@ class Tokenizer {
 				}
 				continue;
 			}
-			if (isAlpha(c)) {
+			if (isAlpha(c) || c == '$') {
 				let token = "" + c;
-				while (isAlphanumeric(this.lookahead)) {
+				while (isAlphanumeric(this.lookahead) || this.lookahead == '$') {
 					token = token + this.nextCharacter();
 				}
 				return new IdentifierToken(token);
@@ -92,6 +92,16 @@ class Tokenizer {
 				return new NumberToken(parseInt(token));
 			}
 			if (c == ":" || c == "{" || c == "}" || c == ";" || c == ",") {
+				return new SpecialToken(c);
+			}
+			if (c == '(' || c == ')') {
+				return new SpecialToken(c);
+			}
+			if (c == '=' && this.lookahead == '=') {
+				this.nextCharacter();
+				return new SpecialToken('==');
+			}
+			if (c == '=') {
 				return new SpecialToken(c);
 			}
 			if (c == "\"") {
