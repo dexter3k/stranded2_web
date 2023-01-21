@@ -155,7 +155,7 @@ function Driver(gl, width, height, cam) {
         ]);
         this.textures["$colorMap"] = loadCustomTextureRGBA(
             gl, new Uint8ClampedArray([0xff, 0xff, 0xff, 0xff]), 1, 1);
-        console.log(this.textures);
+        // console.log(this.textures);
     };
 
     this.setTerrainColormap = function(data, width, height) {

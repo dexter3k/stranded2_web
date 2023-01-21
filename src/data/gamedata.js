@@ -204,13 +204,13 @@ class ObjectInfo {
 		this.detailtex = null;
 	}
 
-	async preloadMedia(driver) {
+	async preloadMedia(driver, gameData) {
 		if (this.modelPath == null) {
 			if (this.model != null) {
 				this.modelPath = this.model;
 			} else {
-				console.log("Object has null model path");
-				return ; // nothing to do here..
+				// todo: this could be something other than an item!
+				this.modelPath = gameData.game.defaultItemModel;
 			}
 		}
 
@@ -220,7 +220,7 @@ class ObjectInfo {
 
 		if (m.textures != null) {
 			for (let i = 0; i < m.textures.length; i++) {
-				const texturePath = removeFilenameFromPath("assets/Stranded II/" + this.modelPath) + m.textures[i].path;
+				const texturePath = removeFilenameFromPath(gameData.modPath + this.modelPath) + m.textures[i].path;
 				m.textures[i].id = await loadTexture(driver.gl, texturePath);
 			}
 		}
@@ -318,8 +318,7 @@ class Gamedata {
 		for (const mat of this.materials) {
 			this.materialByName.set(mat.name, mat);
 		}
-
-		console.log(this.materials);
+		// console.log(this.materials);
 	}
 
 	async loadStates(driver, gui) {
@@ -330,7 +329,7 @@ class Gamedata {
 			const source = await loadTextAsset(this.modPath + path);
 			parseStatesConfig(this.states, source);
 		}
-		console.log(this.states);
+		// console.log(this.states);
 	}
 
 	async loadLightCycle(driver, gui) {
@@ -341,7 +340,7 @@ class Gamedata {
 			const source = await loadTextAsset(this.modPath + path);
 			parseLightCycleConfig(this.lightCycle, source);
 		}
-		console.log(this.lightCycle);
+		// console.log(this.lightCycle);
 	}
 
 	async loadGame() {
@@ -352,7 +351,7 @@ class Gamedata {
 			const source = await loadTextAsset(this.modPath + path);
 			parseGameConfig(this.game, source);
 		}
-		console.log(this.game);
+		// console.log(this.game);
 	}
 
 	async loadGroups(driver, gui) {
@@ -363,7 +362,7 @@ class Gamedata {
 			const source = await loadTextAsset(this.modPath + path);
 			parseGroupsConfig(this.groups, source);
 		}
-		console.log(this.groups);
+		// console.log(this.groups);
 	}
 
 	async loadObjects(driver, gui) {
@@ -391,7 +390,7 @@ class Gamedata {
 		// Load media while updating loading screen..
 		let work = [];
 		for (const object of this.objects.values()) {
-			work.push(object.preloadMedia(driver));
+			work.push(object.preloadMedia(driver, this));
 		}
 		await doAllWithCounter(work, function(done) {
 			gui.bmpf.loadingScreen(gui.strings.base[3], Math.round(25 + 35 * done / work.length));
@@ -410,7 +409,7 @@ class Gamedata {
 		// Load media while updating loading screen..
 		let work = [];
 		for (let unit of this.units.values()) {
-			work.push(unit.preloadMedia(driver));
+			work.push(unit.preloadMedia(driver, this));
 		}
 		await doAllWithCounter(work, function(done) {
 			gui.bmpf.loadingScreen(gui.strings.base[4], Math.round(65 + 15 * done / work.length));
@@ -434,13 +433,13 @@ class Gamedata {
 		// Load media while updating loading screen..
 		let work = [];
 		for (let item of this.items.values()) {
-			work.push(item.preloadMedia(driver));
+			work.push(item.preloadMedia(driver, this));
 		}
 		await doAllWithCounter(work, function(done) {
 			gui.bmpf.loadingScreen(gui.strings.base[5], Math.round(80 + 18 * done / work.length));
 		});
 
-		console.log(this.items);
+		// console.log(this.items);
 	}
 
 	async loadInfos(driver, gui) {
@@ -452,7 +451,7 @@ class Gamedata {
 			parseInfosConfig(this.infos, source);
 		}
 
-		console.log(this.infos);
+		// console.log(this.infos);
 	}
 
 	async loadCombinations(driver, gui) {
@@ -470,7 +469,7 @@ class Gamedata {
 			const source = await loadTextAsset(this.modPath + path);
 			parseCombinationsConfig(this.combinations, source);
 		}
-		console.log(this.combinations);
+		// console.log(this.combinations);
 	}
 
 	async loadBuildings(driver, gui) {
@@ -481,6 +480,6 @@ class Gamedata {
 			const source = await loadTextAsset(this.modPath + path);
 			parseBuildingsConfig(this.buildings, source);
 		}
-		console.log(this.buildings);
+		// console.log(this.buildings);
 	}
 }

@@ -19,6 +19,13 @@ function parseObjectsConfig(objects, source) {
 		}
 
 		switch (key) {
+		case "find":
+		case "state":
+		case "spawn":
+		case "var":
+		case "color":
+			// TODO
+			break;
 		case "id":
 			if (obj != null) {
 				objects.set(obj.id, obj);

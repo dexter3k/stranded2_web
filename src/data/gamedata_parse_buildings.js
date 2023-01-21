@@ -19,6 +19,13 @@ function parseBuildingsConfig(buildings, source) {
 		}
 
 		switch (key) {
+		case "objectid":
+		case "req":
+		case "buildspace":
+		case "atobject":
+		case "unitid":
+			// TODO:
+			break;
 		case "id":
 			if (obj != null) {
 				buildings.set(obj.id, obj);

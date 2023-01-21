@@ -19,6 +19,18 @@ function parseItemsConfig(items, source) {
 		}
 
 		switch (key) {
+		case "weight":
+		case "color":
+		case "info":
+		case "blend":
+		case "damage":
+		case "weaponstate":
+		case "speed":
+		case "rate":
+		case "drag":
+		case "range":
+			// TODO:
+			break;
 		case "id":
 			if (obj != null) {
 				items.set(obj.id, obj);

@@ -19,6 +19,26 @@ function parseUnitsConfig(units, source) {
 		}
 
 		switch (key) {
+		case "speed":
+		case "eyes":
+		case "damage":
+		case "attackrange":
+		case "turnspeed":
+		case "ani_idle1":
+		case "ani_move":
+		case "ani_die":
+		case "ani_attack":
+		case "sfx":
+		case "rideoffset":
+		case "acceleration":
+		case "maxdepth":
+		case "loot":
+		case "ani_idle2":
+		case "ani_idle3":
+		case "range":
+		case "steering":
+			// TODO:
+			break;
 		case "id":
 			if (obj != null) {
 				units.set(obj.id, obj);
