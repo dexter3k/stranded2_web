@@ -14,11 +14,11 @@ class World {
         // render skybox, clear depth
         // render infinite ground plane
         // render infinite water plane
+
         this.scene.driver.drawTerrain(this.terrain);
         this.scene.render();
 
-        for (const id of this.objects.keys()) {
-            const obj = this.objects.get(id);
+        for (const obj of this.objects.values()) {
             const type = this.gameData.objects.get(obj.type);
 
             const modelMatrix = mat4.create();
@@ -28,8 +28,7 @@ class World {
             this.scene.driver.drawModel(modelMatrix, type.modelHandle);
         }
 
-        for (const id of this.units.keys()) {
-            const obj = this.units.get(id);
+        for (const obj of this.units.values()) {
             const type = this.gameData.units.get(obj.type);
 
             const modelMatrix = mat4.create();
@@ -43,6 +42,7 @@ class World {
     clearBeforeNewMap() {
         this.player = null;
 
+        this.header = null;
         this.vars = null;
         this.terrain = null;
         this.mapScript = null;
@@ -52,9 +52,11 @@ class World {
         this.objects = new Map();
         this.units = new Map();
         this.infos = new Map();
+        this.extensions = new Array();
     }
 
     startMapLoading(header) {
+        this.header = header;
         console.log(header);
     }
 
@@ -62,38 +64,25 @@ class World {
         this.vars = vars;
         this.terrain = new Terrain(this.scene.driver, terrain.heightmap);
         this.scene.driver.setTerrainColormap(terrain.colormap);
-
-        // Add map script from vars.script
-        this.mapScript = CompileScript(vars.script);
-
-        // run on:preload
-        // events are run globally, ie on following:
-        // - main game script
-        // - map script
-        // - extensions with mode 0
-        // - object, unit, item, info defs scripts (globally!)
-
-        console.log("Gonna do preload!");
-        console.log(this.gameData.game.script);
-        // this.gameData.game.script.
+        this.mapScript = vars.script;
+        this.runGlobalEvent("preload");
     }
 
     finishMapLoading() {
         // load ambient sound file..
 
+        const gui = this.scene.gui;
         // Setup environment
-        // gui.bmpf.loadingScreen(gui.strings.base[31], 97.0);
+        gui.bmpf.loadingScreen(gui.strings.base[31], 97.0);
 
         // Spawn player at SP map
-        // gui.bmpf.loadingScreen(gui.strings.base[32], 100.0);
+        gui.bmpf.loadingScreen(gui.strings.base[32], 100.0);
 
-        // if (header.mode == "map") {
-        //     // on:start event
-        // }
+        if (this.header.mode == "map") {
+            this.runGlobalEvent("start");
+        }
 
-        // on:load event
-
-        // and we're done :)
+        this.runGlobalEvent("load");
     }
 
     placeObject(object) {
@@ -134,7 +123,7 @@ class World {
     }
 
     addExtension(extension) {
-        // ...
+        this.extensions.push(extension);
     }
 
     setPlayerRotation(p, y) {
@@ -151,5 +140,46 @@ class World {
         x /= 64;
         z /= 64;
         return this.terrain.getHeight(x + worldHalfSize, z + worldHalfSize) * worldHeight - worldHeight/2;
+    }
+
+    runGlobalEvent(name) {
+        if (this.gameData.game.script != null) {
+            this.gameData.game.script.runEvent(name);
+        }
+
+        return;
+
+        if (this.mapScript != null) {
+            this.mapScript.runEvent(name);
+        }
+
+        for (const ext of this.extensions) {
+            console.log(ext);
+        }
+
+        for (const obj of this.gameData.objects.values()) {
+            if (obj.script == null) {
+                continue;
+            }
+            obj.script.runEvent(name);
+        }
+        for (const unit of this.gameData.units.values()) {
+            if (unit.script == null) {
+                continue;
+            }
+            unit.script.runEvent(name);
+        }
+        for (const item of this.gameData.items.values()) {
+            if (item.script == null) {
+                continue;
+            }
+            item.script.runEvent(name);
+        }
+        for (const info of this.gameData.infos.values()) {
+            if (info.script == null) {
+                continue;
+            }
+            info.script.runEvent(name);
+        }
     }
 }
