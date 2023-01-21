@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"encoding/binary"
 	"strings"
+	"github.com/davecgh/go-spew/spew"
 )
 
 var le = binary.LittleEndian
@@ -762,6 +763,7 @@ func main() {
 	m, err := ParseModel(file)
 	check(err)
 	m.Print()
+	spew.Dump(m)
 }
 
 func readBinary(path string) []byte {
