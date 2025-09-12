@@ -6,8 +6,8 @@ class World {
         this.clearBeforeNewMap();
     }
 
-    update(deltaTime) {
-        // ...
+    update() {
+        console.log("World::Update");
     }
 
     render(deltaTime) {
@@ -15,7 +15,9 @@ class World {
         // render infinite ground plane
         // render infinite water plane
 
-        this.scene.driver.drawTerrain(this.terrain);
+        if (this.terrain != null) {
+            this.scene.driver.drawTerrain(this.terrain);
+        }
         this.scene.render();
 
         for (const obj of this.objects.values()) {

@@ -113,7 +113,7 @@ function Driver(gl, width, height, cam) {
                 }
 
                 gl.activeTexture(gl.TEXTURE0+j);
-                gl.bindTexture(gl.TEXTURE_2D, model.textures[tex].id);
+                gl.bindTexture(gl.TEXTURE_2D, model.textures[tex].id.id);
                 gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
                 gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
                 gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
@@ -234,19 +234,19 @@ function Driver(gl, width, height, cam) {
         gl.vertexAttribPointer(this.terrainProgram.attribs.uv, 2, gl.FLOAT, false, 5 * 4, 3 * 4);
 
         gl.activeTexture(gl.TEXTURE0);
-        gl.bindTexture(gl.TEXTURE_2D, this.textures["$colorMap"]);
+        gl.bindTexture(gl.TEXTURE_2D, this.textures["$colorMap"].id);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
 
         gl.activeTexture(gl.TEXTURE1);
-        gl.bindTexture(gl.TEXTURE_2D, this.textures["sys/gfx/terraindirt.bmp"]);
+        gl.bindTexture(gl.TEXTURE_2D, this.textures["sys/gfx/terraindirt.bmp"].id);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
 
         gl.activeTexture(gl.TEXTURE2);
-        gl.bindTexture(gl.TEXTURE_2D, this.textures["sys/gfx/terrainstructure.bmp"]);
+        gl.bindTexture(gl.TEXTURE_2D, this.textures["sys/gfx/terrainstructure.bmp"].id);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);

@@ -4,6 +4,8 @@ function Bmpf(driver) {
     var textures = {};
     var fonts = [];
 
+    this.defaultHeight = 0;
+
     this.loadingScreen = function(text, progressPercent = -1) {
         driver.clearScene();
         const centerX = Math.floor(driver.width/2);
@@ -15,7 +17,7 @@ function Bmpf(driver) {
 
             const progress = 600 / 100 * progressPercent;
             this.driver.drawImage([centerX-300, centerY+5, centerX-300 + progress, centerY+10],
-                [0, 0, progress, 5], [600, 5], textures["sys/gfx/progress.bmp"]);
+                [0, 0, progress, 5], [600, 5], textures["sys/gfx/progress.bmp"].id);
 
             this.centeredText(centerX, centerY+20, progressPercent+"%", 0);
         }
@@ -94,12 +96,14 @@ function Bmpf(driver) {
             loadBinaryAsset("assets/Stranded II/sys/gfx/font_norm.bmpf"),
             loadBinaryAsset("assets/Stranded II/sys/gfx/font_tiny.bmpf"),
         ]);
-        fonts[0] = loadFont(fontDatas[0], textures["sys/gfx/font_norm.bmp"]);
-        fonts[1] = loadFont(fontDatas[0], textures["sys/gfx/font_norm_over.bmp"]);
-        fonts[2] = loadFont(fontDatas[0], textures["sys/gfx/font_norm_dark.bmp"]);
-        fonts[3] = loadFont(fontDatas[0], textures["sys/gfx/font_norm_bad.bmp"]);
-        fonts[4] = loadFont(fontDatas[0], textures["sys/gfx/font_norm_good.bmp"]);
-        fonts[5] = loadFont(fontDatas[1], textures["sys/gfx/font_tiny.bmp"]);
-        fonts[6] = loadFont(fontDatas[0], textures["sys/gfx/font_handwriting.bmp"]);
+        fonts[0] = loadFont(fontDatas[0], textures["sys/gfx/font_norm.bmp"].id);
+        fonts[1] = loadFont(fontDatas[0], textures["sys/gfx/font_norm_over.bmp"].id);
+        fonts[2] = loadFont(fontDatas[0], textures["sys/gfx/font_norm_dark.bmp"].id);
+        fonts[3] = loadFont(fontDatas[0], textures["sys/gfx/font_norm_bad.bmp"].id);
+        fonts[4] = loadFont(fontDatas[0], textures["sys/gfx/font_norm_good.bmp"].id);
+        fonts[5] = loadFont(fontDatas[1], textures["sys/gfx/font_tiny.bmp"].id);
+        fonts[6] = loadFont(fontDatas[0], textures["sys/gfx/font_handwriting.bmp"].id);
+
+        this.defaultHeight = fonts[0].glyphHeight;
     };
 }

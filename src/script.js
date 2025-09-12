@@ -476,7 +476,7 @@ class ScriptCompiler {
 			this.parseEvent();
 		}
 
-		console.log(this.emitter.code.join('\n'));
+		// console.log(this.emitter.code.join('\n'));
 
 		for (let i = 0; i < this.errors.length; i++) {
 			console.error("Parsing error: " + this.errors[i]);
