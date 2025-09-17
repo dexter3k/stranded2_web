@@ -160,7 +160,13 @@ class Tokenizer {
 				}
 				return new SpecialToken(c);
 			}
-			// todo: *= /= %= etc do these exist?
+			if (c == '*' || c == '/' || c == '%') {
+				// todo: *= /= %= etc do these exist?
+				if (this.lookahead == '=') {
+					return new UnknownToken(c + this.nextCharacter());
+				}
+				return new SpecialToken(c);
+			}
 			if (c == "\"") {
 				let token = "";
 				while (this.lookahead != "\"") {
@@ -805,6 +811,7 @@ class ScriptCompiler {
 	nextToken() {
 		this.current = this.lookahead;
 		this.lookahead = this.tokenizer.next();
+		// console.log(this.current);
 		return this.current;
 	}
 

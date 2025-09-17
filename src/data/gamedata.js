@@ -261,6 +261,15 @@ class BuildingInfo {
 	}
 }
 
+class RandomMapInfo {
+	constructor(id) {
+		this.id = id;
+		this.name = `<random map ${id}>`;
+		this.script = null;
+		this.spawns = [];
+	}
+}
+
 class Gamedata {
 	constructor(mod) {
 		this.mod = mod;
@@ -289,6 +298,7 @@ class Gamedata {
 
 		this.combinations = new Array();
 		this.buildings = new Map();
+		this.randomMaps = new Map();
 	}
 
 	async loadStrings() {
@@ -481,5 +491,19 @@ class Gamedata {
 			parseBuildingsConfig(this.buildings, source);
 		}
 		// console.log(this.buildings);
+	}
+
+	async loadRandomMaps(driver, gui) {
+		const files = [
+			"sys/random_01_endless_e.inf",
+			"sys/random_02_endless_n.inf",
+			"sys/random_03_endless_h.inf",
+			"sys/random_05_raptors.inf",
+		];
+		for (const path of files) {
+			const source = await loadTextAsset(this.modPath + path);
+			parseRandomMapConfig(this.randomMaps, source);
+		}
+		// console.log(this.randomMaps);
 	}
 }

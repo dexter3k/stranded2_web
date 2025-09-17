@@ -81,6 +81,8 @@ async function main() {
     await data.loadCombinations(driver, gui);
     await data.loadBuildings(driver, gui);
 
+    await data.loadRandomMaps(driver, gui);
+
     const world = new World(scene, data);
     const game = new Game(world, gui);
     game.switchToMainMenu();
@@ -90,6 +92,9 @@ async function main() {
     let start = undefined;
     let avgDelta = 1.0;
     const anim = (t) => {
+        // Request next frame asap
+        window.requestAnimationFrame(anim);
+
         if (start === undefined) {
             start = t;
         }
@@ -104,19 +109,18 @@ async function main() {
         // if (a) { mot[1] -= 1.0; }
         // if (d) { mot[1] += 1.0; }
         // vec2.normalize(mot, mot);
-
         // cam.move(mot[0], mot[1], deltaTime);
 
         game.render(deltaTime);
 
-        // Draw current FPS
-        gui.bmpf.centeredText(400, 20,
-            Math.round(1000.0 / avgDelta) + " FPS", 0);
-        // Draw current position
-        gui.bmpf.centeredText(400, 40,
-            Math.floor(cam.pos[0])+","+Math.floor(cam.pos[1])+","+Math.floor(cam.pos[2]), 0);
-
-        window.requestAnimationFrame(anim);
+        if (true) {
+            // Draw current FPS
+            gui.bmpf.centeredText(400, 20,
+                Math.round(1000.0 / avgDelta) + " FPS", 0);
+            // Draw current position
+            gui.bmpf.centeredText(400, 40,
+                Math.floor(cam.pos[0])+","+Math.floor(cam.pos[1])+","+Math.floor(cam.pos[2]), 0);
+        }
     };
     window.requestAnimationFrame(anim);
 

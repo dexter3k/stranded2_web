@@ -23,9 +23,28 @@ function Bmpf(driver) {
         }
     };
 
-    this.centeredText = function(x, y, text, font) {
-        var offset = 0;
-        for (var i = 0; i < text.length; i++) {
+    this.text = function(x, y, text, font) {
+        for (let i = 0; i < text.length; i++) {
+            const c = text.charCodeAt(i);
+            if (c == 32) {// space
+                x += Math.floor(fonts[font].glyphWidth / 2);
+            } else if (fonts[font].mapping[c]) {
+                const sourceX = fonts[font].glyphWidth * fonts[font].mapping[c].index;
+                const sourceY = 0;
+                const sourceW = fonts[font].mapping[c].width;
+                const sourceH = fonts[font].glyphHeight;
+                const target = [x, y, x+sourceW, y+sourceH];
+                const source = [sourceX, sourceY, sourceX+sourceW, sourceY+sourceH];
+                this.driver.drawImage(target, source,
+                    [fonts[font].glyphWidth * fonts[font].glyphCount, fonts[font].glyphHeight], fonts[font].texture);
+                x += sourceW;
+            }
+        }
+    }
+
+    this.text_width = function(text, font) {
+        let offset = 0;
+        for (let i = 0; i < text.length; i++) {
             const c = text.charCodeAt(i);
             if (c == 32) {// space
                 offset += Math.floor(fonts[font].glyphWidth / 2);
@@ -33,6 +52,11 @@ function Bmpf(driver) {
                 offset += fonts[font].mapping[c].width;
             }
         }
+        return offset;
+    }
+
+    this.centeredText = function(x, y, text, font) {
+        var offset = this.text_width(text, font);
         x -= Math.floor(offset/2);
         for (var i = 0; i < text.length; i++) {
             const c = text.charCodeAt(i);

@@ -170,11 +170,17 @@ function Driver(gl, width, height, cam) {
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     };
 
-    this.drawImage = function(target, source, textureSize, texture) {
+    this.drawImage = function(target, source, textureSize, texture, opts = {}) {
         go2D();
 
         gl.activeTexture(gl.TEXTURE0);
         gl.bindTexture(gl.TEXTURE_2D, texture);
+
+        // const wrap = opts.repeat
+        //     ? gl.REPEAT
+        //     : gl.CLAMP_TO_EDGE;
+        // gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, wrap);
+        // gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, wrap);
 
         gl.bindBuffer(gl.ARRAY_BUFFER, buffersImage.position);
         gl.enableVertexAttribArray(default2DProgram.attribLocations.vertexPosition);
@@ -200,6 +206,7 @@ function Driver(gl, width, height, cam) {
         gl.uniformMatrix4fv(default2DProgram.uniformLocations.projectionMatrix, false, orthoMatrix);
         gl.uniformMatrix4fv(default2DProgram.uniformLocations.textureMatrix, false, textureMatrix);
         gl.uniform1i(default2DProgram.uniformLocations.sampler, 0);
+        gl.uniform1i(default2DProgram.uniformLocations.repeat, opts.repeat ? 1 : 0);
 
         gl.drawArrays(gl.TRIANGLES, 0, 6);
     };
@@ -302,9 +309,12 @@ function Driver(gl, width, height, cam) {
             varying mediump vec2 vTextureCoord;
 
             uniform sampler2D uSampler;
+            uniform bool uRepeat;
 
             void main() {
-                vec4 color = texture2D(uSampler, vTextureCoord);
+                vec2 uv = uRepeat ? fract(vTextureCoord)
+                    : clamp(vTextureCoord, 0.0, 1.0);
+                vec4 color = texture2D(uSampler, uv);
                 // TODO: Flag to disable/enable this
                 if (color.r == 1.0 && color.g == 0.0 && color.b == 1.0) {
                     color.a = 0.0;
@@ -325,6 +335,7 @@ function Driver(gl, width, height, cam) {
                 projectionMatrix: gl.getUniformLocation(shaderProgram, 'uProjectionMatrix'),
                 textureMatrix: gl.getUniformLocation(shaderProgram, 'uTextureMatrix'),
                 sampler: gl.getUniformLocation(shaderProgram, 'uSampler'),
+                repeat: gl.getUniformLocation(shaderProgram, 'uRepeat'),
             },
         };
     };

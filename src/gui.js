@@ -119,11 +119,113 @@ class GuiButton extends GuiElement {
 }
 
 class GuiWindow extends GuiElement {
-    constructor(x, y) {
+    constructor(x, y, title, icon) {
         super(x, y, 580, 595);
+
+        this.icon = icon;
+        this.title = title;
     }
 
     draw(gui) {
+        // gfx_win
+        {
+            const tex = gui.textures["sys/gfx/woodback_dark.bmp"];
+            gui.driver.drawImage(this.rect, [0, 0], [tex.width, tex.height], tex.id, {
+                repeat: true,
+            });
+
+            const hori = gui.textures["sys/gfx/border_hori.bmp"];
+            gui.driver.drawImage(
+                [this.x, this.y + 579, this.x + this.width, this.y + 579 + hori.height],
+                [0, 0],
+                [hori.width, hori.height],
+                hori.id,
+                { repeat: true },
+            );
+
+            const vert = gui.textures["sys/gfx/border_vert.bmp"];
+            gui.driver.drawImage(
+                [this.x, this.y, this.x + vert.width, this.y + this.height],
+                [0, 0],
+                [vert.width, vert.height],
+                vert.id,
+                { repeat: true },
+            );
+            gui.driver.drawImage(
+                [this.x + 564, this.y, this.x + 564 + vert.width, this.y + this.height],
+                [0, 0],
+                [vert.width, vert.height],
+                vert.id,
+                { repeat: true },
+            );
+
+            gui.drawImage("sys/gfx/border_corn.bmp", this.x, this.y + 579);
+            gui.drawImage("sys/gfx/border_corn.bmp", this.x + 564, this.y + 579);
+        }
+
+        // Title Icon
+        gui.drawIcon(this.x + 21, this.y + 5, this.icon);
+
+        // Title text
+        gui.bmpf.text(this.x + 21 + 37, this.y + 10, this.title, 0);
+
+        // gfx_winbar
+        {
+            const hori = gui.textures["sys/gfx/border_hori.bmp"];
+            gui.driver.drawImage(
+                [this.x, this.y + 42, this.x + this.width, this.y + 42 + hori.height],
+                [0, 0],
+                [hori.width, hori.height],
+                hori.id,
+                { repeat: true },
+            );
+            gui.drawImage("sys/gfx/border_corn.bmp", this.x, this.y + 42);
+            gui.drawImage("sys/gfx/border_corn.bmp", this.x + 564, this.y + 42);
+        }
+    }
+}
+
+class GuiText extends GuiElement {
+    constructor(x, y, text) {
+        super(x, y, 100, 100);
+
+        this.text = text;
+    }
+
+    draw(gui) {
+        gui.bmpf.text(this.x, this.y, this.text, 0);
+    }
+}
+
+class GuiRadio extends GuiElement {
+    constructor(gui, x, y, text, group, value) {
+        super(x, y, 16 + 3 + gui.bmpf.text_width(text, 0), 16);
+
+        this.text = text;
+        this.group = group;
+        this.value = value;
+    }
+
+    draw(gui) {
+        const [mx, my] = [gui.input.getMouseX(), gui.input.getMouseY()];
+        const hovered = this.isMouseInside(mx, my);
+
+        if (hovered) {
+            gui.drawImage("sys/gfx/opt_over.bmp", this.x, this.y);
+        } else {
+            gui.drawImage("sys/gfx/opt.bmp", this.x, this.y);
+        }
+
+        if (hovered && gui.input.wasLeftMouseButtonJustReleased()) {
+            gui.radio_groups.set(this.group, this.value);
+        }
+
+        const selected = gui.radio_groups.get(this.group) == this.value;
+        if (selected) {
+            gui.drawImage("sys/gfx/opt_sel.bmp", this.x, this.y);
+        }
+
+        gui.bmpf.text(this.x + 16 + 3, this.y + 8 - Math.floor(gui.bmpf.defaultHeight / 2), this.text, hovered ? 1 : 0);
     }
 }
 
@@ -136,10 +238,12 @@ class Gui {
         this.textures = {};
 
         this.scene = [];
+        this.radio_groups = new Map();
     }
 
     clearScene() {
         this.scene = [];
+        this.radio_groups = new Map();
     }
 
     drawImage(name, x, y) {
@@ -160,8 +264,19 @@ class Gui {
         this.driver.drawImage([x, y, x + 32, y + 32], [sx * 32, sy * 32], [tex.width, tex.height], tex.id);
     }
 
-    addWindow(x, y) {
-        this.scene.push(new GuiWindow(x, y));
+    addRadio(x, y, title, group, value) {
+        if (!this.radio_groups.has(group)) {
+            this.radio_groups.set(group, value);
+        }
+        this.scene.push(new GuiRadio(this, x, y, title, group, value));
+    }
+
+    addText(x, y, text) {
+        this.scene.push(new GuiText(x, y, text));
+    }
+
+    addWindow(x, y, title, icon) {
+        this.scene.push(new GuiWindow(x, y, title, icon));
     }
 
     addCenteredImage(name, x, y) {
@@ -171,11 +286,6 @@ class Gui {
     addButton(x, y, txt, cb=null, icon=-1, enabled=true) {
         this.scene.push(new GuiButton(x, y, txt, cb, icon, enabled));
     }
-
-    // drawGuiButton(x, y, txt, icon=-1, enabled=true) {
-    //     const button = new GuiButton(x, y, txt, icon, enabled);
-    //     button.draw(this);
-    // }
 
     update() {
         for (const elem of this.scene) {
